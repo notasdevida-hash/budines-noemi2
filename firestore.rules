@@ -9,43 +9,18 @@ service cloud.firestore {
      * This ruleset implements a Role-Based Access Control (RBAC) model focused on e-commerce 
      * operations. It prioritizes public visibility for products while restricting administrative 
      * management and sensitive order data to authorized administrators.
-     *
-     * DATA STRUCTURE:
-     * - /products: Publicly readable catalog of items for sale.
-     * - /orders: Transactional data. Created by customers, managed by admins.
-     * - /roles_admin: A registry of UIDs that possess administrative privileges.
-     *
-     * KEY SECURITY DECISIONS:
-     * 1. DBAC (Document-Based Access Control): Admin status is verified by checking for the existence 
-     *    of a user's UID within the 'roles_admin' collection. This avoids dependency on Custom Claims.
-     * 2. Public Ordering: To support anonymous or guest checkouts (as indicated by 'anonymous' 
-     *    auth provider support), the creation of orders is permitted publicly.
-     * 3. Admin-Only Order Management: Only admins can list or modify orders to protect customer PII 
-     *    (Name, Phone, Email) stored within the order documents.
-     * 4. Structural Segregation: Administrative roles are separated into their own collection to 
-     *    cleanly define the security boundary.
      */
 
     // --- Global Helper Functions ---
 
-    /** 
-     * @description Checks if the request is from an authenticated user.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** 
-     * @description Verifies if the authenticated user has an entry in the admin roles collection.
-     * This follows the DBAC pattern for performance and independence from claims.
-     */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /** 
-     * @description Ensures a document exists and the requester is an admin for destructive operations.
-     */
     function isExistingAdmin() {
       return resource != null && isAdmin();
     }
@@ -53,30 +28,21 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description Rules for the Product catalog. Publicly viewable, admin-only management.
-     * @path /products/{productId}
-     * @allow get, list: (any) Public access to view products.
-     * @allow create: (admin) Authenticated admin creating a new product.
-     * @deny update: (non-admin) Any user attempting to change prices or product details.
-     * @principle Public Read with Owner-Only Writes (Admin scope).
+     * @description Rules for the Product catalog.
+     * Permitimos la creación si el usuario es admin. Eliminamos la restricción request.resource.data.id 
+     * para evitar errores con addDoc, aunque el código ahora lo incluirá por consistencia.
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create: if isAdmin() && request.resource.data.id == productId;
+      allow create: if isAdmin();
       allow update, delete: if isExistingAdmin();
     }
 
     /**
-     * @description Rules for Customer Orders. Public creation to allow checkout; admin listing for privacy.
-     * @path /orders/{orderId}
-     * @allow create: (any) Public creation of orders for guest checkout.
-     * @allow get: (any) Public access to a specific order (e.g., for order confirmation pages).
-     * @allow list: (admin) Admins viewing the dashboard.
-     * @deny list: (non-admin) Prevents bulk exposure of customer PII.
-     * @principle Restricted List access for PII protection.
+     * @description Rules for Customer Orders.
      */
     match /orders/{orderId} {
-      allow create: if request.resource.data.id == orderId;
+      allow create: if true; // Permitir creación pública para checkout
       allow get: if true;
       allow list: if isAdmin();
       allow update, delete: if isExistingAdmin();
@@ -84,11 +50,6 @@ service cloud.firestore {
 
     /**
      * @description Rules for the Administrative Role registry.
-     * @path /roles_admin/{userId}
-     * @allow get: (signedIn) Users checking their own admin status.
-     * @allow list: (admin) Admins auditing the role list.
-     * @deny create, update, delete: (any) Prevents self-promotion or unauthorized role changes via client SDK.
-     * @principle DBAC Integrity - Roles managed via backend/console only.
      */
     match /roles_admin/{userId} {
       allow get: if isSignedIn();

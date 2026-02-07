@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -6,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
 export function ProductManager() {
@@ -22,7 +21,13 @@ export function ProductManager() {
   const handleAddProduct = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Generamos un nuevo DocumentReference para obtener el ID antes de guardar
+    const colRef = collection(db, 'products');
+    const newDocRef = doc(colRef);
+
     const newProduct = {
+      id: newDocRef.id, // Incluimos el ID explícitamente como requiere el backend.json
       name: formData.get('name') as string,
       price: Number(formData.get('price')),
       imageUrl: formData.get('imageUrl') as string,
@@ -31,8 +36,8 @@ export function ProductManager() {
       createdAt: new Date().toISOString(),
     };
 
-    const colRef = collection(db, 'products');
-    addDocumentNonBlocking(colRef, newProduct);
+    // Usamos setDocumentNonBlocking con el ID pre-generado
+    setDocumentNonBlocking(newDocRef, newProduct, { merge: true });
     setIsDialogOpen(false);
   };
 
