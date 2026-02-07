@@ -39,7 +39,6 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-8 text-sm font-bold uppercase tracking-widest">
           <Link href="/#productos" className="hover:text-primary transition-colors">Productos</Link>
           <Link href="/#nosotros" className="hover:text-primary transition-colors">Nosotros</Link>
-          <Link href="/admin" className="opacity-50 hover:opacity-100 transition-opacity">Panel Admin</Link>
         </div>
 
         <div className="flex items-center gap-2">
