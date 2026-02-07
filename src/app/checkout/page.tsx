@@ -8,16 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, increment } from 'firebase/firestore';
+import { useUser } from '@/firebase';
+
+/**
+ * @fileoverview Página de Checkout actualizada para usar el backend serverless.
+ */
 
 export default function CheckoutPage() {
-  const { items, totalPrice, cartCount, clearCart } = useCart();
+  const { items, totalPrice, cartCount } = useCart();
   const [loading, setLoading] = useState(false);
-  const db = useFirestore();
-  const router = useRouter();
+  const { user } = useUser();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,61 +28,39 @@ export default function CheckoutPage() {
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     
-    // Generar un ID para el pedido
-    const ordersRef = collection(db, 'orders');
-    const newOrderRef = doc(ordersRef);
-
-    const orderData = {
-      id: newOrderRef.id,
-      customerName: formData.get('name') as string,
-      customerPhone: formData.get('phone') as string,
-      customerEmail: (formData.get('email') as string) || '',
-      productIds: items.map(item => item.id),
-      cartDetails: items.map(item => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      total: totalPrice,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
+    const customerInfo = {
+      name: formData.get('name') as string,
+      phone: formData.get('phone') as string,
+      email: (formData.get('email') as string) || '',
     };
 
     try {
-      // 1. Guardamos el pedido en Firestore
-      setDocumentNonBlocking(newOrderRef, orderData, { merge: true });
-      
-      // 2. Actualizamos el stock de cada producto de forma atómica
-      items.forEach(item => {
-        const productRef = doc(db, 'products', item.id);
-        updateDocumentNonBlocking(productRef, {
-          stock: increment(-item.quantity)
-        });
+      // Llamada a nuestra API Serverless
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          customerInfo,
+          userId: user?.uid,
+        }),
       });
 
-      toast({
-        title: "¡Pedido Recibido!",
-        description: "Estamos procesando tu pedido. Redirigiendo...",
-      });
+      const data = await response.json();
+
+      if (data.init_point) {
+        // Redirigir al Checkout Pro de Mercado Pago
+        window.location.href = data.init_point;
+      } else {
+        throw new Error(data.error || 'Error al crear el pago');
+      }
       
-      // Simulación de redirección o cierre
-      setTimeout(() => {
-        clearCart();
-        router.push('/');
-        toast({
-          title: "Compra Exitosa",
-          description: "Tu pedido ha sido registrado y el stock actualizado.",
-        });
-      }, 2000);
-      
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudo procesar tu pedido. Intenta nuevamente.",
+        description: error.message || "No se pudo iniciar el pago.",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -102,81 +81,55 @@ export default function CheckoutPage() {
       <h1 className="text-4xl font-bold mb-12 text-center">Finalizar Compra</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Form Section */}
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Información de Contacto</CardTitle>
+              <CardTitle>Información de Envío/Contacto</CardTitle>
             </CardHeader>
             <CardContent>
-              <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nombre Completo *</Label>
                   <Input id="name" name="name" placeholder="Juan Perez" required />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono de Contacto *</Label>
-                  <Input id="phone" name="phone" placeholder="+54 11 1234 5678" required />
+                  <Label htmlFor="phone">Teléfono *</Label>
+                  <Input id="phone" name="phone" placeholder="+54 11 ..." required />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email (Opcional)</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input id="email" name="email" type="email" placeholder="juan@ejemplo.com" />
                 </div>
 
-                <div className="pt-4">
-                  <Button 
-                    type="submit" 
-                    className="w-full py-8 text-xl font-bold" 
-                    disabled={loading}
-                  >
-                    {loading ? "Procesando..." : "Confirmar Pedido"}
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground mt-4">
-                    Al confirmar, el stock se reservará y coordinaremos el pago.
-                  </p>
-                </div>
+                <Button type="submit" className="w-full py-8 text-xl font-bold" disabled={loading}>
+                  {loading ? "Preparando pago..." : "Ir a Pagar con Mercado Pago"}
+                </Button>
               </form>
             </CardContent>
           </Card>
         </div>
 
-        {/* Summary Section */}
         <div className="space-y-8">
           <Card className="bg-secondary/10">
             <CardHeader>
-              <CardTitle>Resumen del Pedido</CardTitle>
+              <CardTitle>Resumen</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center text-sm">
+                <div key={item.id} className="flex justify-between text-sm">
                   <span>{item.quantity}x {item.name}</span>
                   <span className="font-medium">${item.price * item.quantity}</span>
                 </div>
               ))}
               <Separator />
-              <div className="flex justify-between items-center text-xl font-bold pt-2">
+              <div className="flex justify-between text-xl font-bold pt-2">
                 <span>Total</span>
                 <span className="text-primary">${totalPrice}</span>
               </div>
             </CardContent>
           </Card>
-          
-          <div className="p-6 border rounded-lg bg-card text-sm space-y-4">
-            <div className="flex gap-4">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-primary font-bold">1</span>
-              </div>
-              <p className="text-muted-foreground">El stock se descuenta automáticamente al confirmar la compra.</p>
-            </div>
-            <div className="flex gap-4">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-primary font-bold">2</span>
-              </div>
-              <p className="text-muted-foreground">Nos contactaremos por WhatsApp para coordinar la entrega y el pago.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
