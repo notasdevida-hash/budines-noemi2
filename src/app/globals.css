@@ -13,7 +13,7 @@
     --popover-foreground: 20 10% 10%;
     --primary: 32 23% 56%; /* Muted brown #A69079 */
     --primary-foreground: 60 20% 98%;
-    --secondary: 60 40% 92%; /* Soft beige #F5F5DC */
+    --secondary: 45 40% 90%; /* Warm beige */
     --secondary-foreground: 32 23% 40%;
     --muted: 60 10% 92%;
     --muted-foreground: 32 10% 40%;
@@ -24,15 +24,46 @@
     --border: 32 10% 90%;
     --input: 32 10% 90%;
     --ring: 32 23% 56%;
-    --radius: 0.75rem;
+    --radius: 1.5rem;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground font-body;
   }
+}
+
+/* Toques únicos */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, hsl(var(--primary)), #8a735a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8a735a;
 }
