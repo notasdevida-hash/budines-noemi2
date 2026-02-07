@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,21 +23,20 @@ export function ProductManager() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    // Generamos un nuevo DocumentReference para obtener el ID antes de guardar
     const colRef = collection(db, 'products');
     const newDocRef = doc(colRef);
 
     const newProduct = {
-      id: newDocRef.id, // Incluimos el ID explícitamente como requiere el backend.json
+      id: newDocRef.id,
       name: formData.get('name') as string,
       price: Number(formData.get('price')),
+      stock: Number(formData.get('stock')),
       imageUrl: formData.get('imageUrl') as string,
       description: formData.get('description') as string,
       active: true,
       createdAt: new Date().toISOString(),
     };
 
-    // Usamos setDocumentNonBlocking con el ID pre-generado
     setDocumentNonBlocking(newDocRef, newProduct, { merge: true });
     setIsDialogOpen(false);
   };
@@ -44,6 +44,13 @@ export function ProductManager() {
   const toggleProductStatus = (productId: string, currentStatus: boolean) => {
     const docRef = doc(db, 'products', productId);
     updateDocumentNonBlocking(docRef, { active: !currentStatus });
+  };
+
+  const updateStock = (productId: string, newStock: string) => {
+    const stockNum = Number(newStock);
+    if (isNaN(stockNum)) return;
+    const docRef = doc(db, 'products', productId);
+    updateDocumentNonBlocking(docRef, { stock: stockNum });
   };
 
   const handleDeleteProduct = (productId: string) => {
@@ -71,9 +78,15 @@ export function ProductManager() {
                 <Label htmlFor="prod-name">Nombre</Label>
                 <Input id="prod-name" name="name" placeholder="Ej: Budín de Nuez" required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="prod-price">Precio</Label>
-                <Input id="prod-price" name="price" type="number" placeholder="2000" required />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prod-price">Precio</Label>
+                  <Input id="prod-price" name="price" type="number" placeholder="2000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="prod-stock">Stock Inicial</Label>
+                  <Input id="prod-stock" name="stock" type="number" placeholder="10" required />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="prod-img">URL Imagen</Label>
@@ -104,6 +117,7 @@ export function ProductManager() {
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Precio</TableHead>
+                  <TableHead>Stock</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -113,6 +127,14 @@ export function ProductManager() {
                   <TableRow key={prod.id}>
                     <TableCell className="font-medium">{prod.name}</TableCell>
                     <TableCell>${prod.price}</TableCell>
+                    <TableCell>
+                      <Input 
+                        type="number" 
+                        defaultValue={prod.stock} 
+                        className="w-20 h-8" 
+                        onBlur={(e) => updateStock(prod.id, e.target.value)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <button 
                         onClick={() => toggleProductStatus(prod.id, prod.active)}
@@ -130,7 +152,7 @@ export function ProductManager() {
                 ))}
                 {!products?.length && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No hay productos registrados.
                     </TableCell>
                   </TableRow>

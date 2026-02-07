@@ -10,10 +10,13 @@ import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 export default function CheckoutPage() {
   const { items, totalPrice, cartCount, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
+  const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -23,29 +26,47 @@ export default function CheckoutPage() {
 
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    const customerData = {
-      name: formData.get('name'),
-      phone: formData.get('phone'),
-      email: formData.get('email'),
+    
+    // Generar un ID para el pedido
+    const ordersRef = collection(db, 'orders');
+    const newOrderRef = doc(ordersRef);
+
+    const orderData = {
+      id: newOrderRef.id,
+      customerName: formData.get('name') as string,
+      customerPhone: formData.get('phone') as string,
+      customerEmail: (formData.get('email') as string) || '',
+      productIds: items.map(item => item.id), // Almacenamos los IDs de los productos
+      cartDetails: items.map(item => ({ // Detalle extra para el administrador
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      total: totalPrice,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
     };
 
     try {
-      // Simulation of creating order in Firestore via API
-      // In a real scenario, this calls a Server Action or API route
-      console.log('Creating order for:', customerData, 'Items:', items);
+      // Guardamos el pedido en Firestore de forma no bloqueante
+      setDocumentNonBlocking(newOrderRef, orderData, { merge: true });
       
-      // Placeholder for Mercado Pago redirect
       toast({
-        title: "¡Pedido Iniciado!",
-        description: "Redirigiendo a Mercado Pago para completar tu compra...",
+        title: "¡Pedido Recibido!",
+        description: "Estamos procesando tu pedido. Redirigiendo...",
       });
       
-      // Simulating a delay
-      await new Promise(r => setTimeout(r, 2000));
-      
-      // clearCart();
-      // router.push('/');
-      alert("Aquí se integraría Mercado Pago. El pedido quedó en estado 'pending'.");
+      // Simulamos la redirección a Mercado Pago
+      // En el futuro, aquí llamarías a tu API para obtener el init_point
+      setTimeout(() => {
+        clearCart();
+        router.push('/');
+        toast({
+          title: "Simulación de Pago",
+          description: "Tu pedido ha sido registrado como 'Pendiente' en el panel admin.",
+        });
+      }, 2000);
       
     } catch (error) {
       toast({
@@ -103,10 +124,10 @@ export default function CheckoutPage() {
                     className="w-full py-8 text-xl font-bold" 
                     disabled={loading}
                   >
-                    {loading ? "Procesando..." : "Pagar con Mercado Pago"}
+                    {loading ? "Procesando..." : "Confirmar Pedido"}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground mt-4">
-                    Al hacer clic, serás redirigido de forma segura a Mercado Pago para completar el pago.
+                    Al confirmar, tu pedido aparecerá en nuestro sistema y coordinaremos el pago.
                   </p>
                 </div>
               </form>
@@ -140,13 +161,13 @@ export default function CheckoutPage() {
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <span className="text-primary font-bold">1</span>
               </div>
-              <p className="text-muted-foreground">Tus budines se preparan artesanalmente una vez confirmado el pago.</p>
+              <p className="text-muted-foreground">Tus budines se preparan artesanalmente una vez confirmado el pedido.</p>
             </div>
             <div className="flex gap-4">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <span className="text-primary font-bold">2</span>
               </div>
-              <p className="text-muted-foreground">Nos contactaremos por WhatsApp para coordinar la entrega o retiro.</p>
+              <p className="text-muted-foreground">Nos contactaremos por WhatsApp para coordinar la entrega y el pago.</p>
             </div>
           </div>
         </div>

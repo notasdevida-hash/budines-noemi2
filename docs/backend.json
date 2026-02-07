@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Product": {
@@ -30,6 +31,10 @@
         "active": {
           "type": "boolean",
           "description": "Indicates whether the product is active and available for sale."
+        },
+        "stock": {
+          "type": "number",
+          "description": "Available quantity in stock."
         }
       },
       "required": [
@@ -38,7 +43,8 @@
         "price",
         "imageUrl",
         "description",
-        "active"
+        "active",
+        "stock"
       ]
     },
     "Order": {
@@ -78,6 +84,11 @@
         "status": {
           "type": "string",
           "description": "Status of the order (pending, paid, failed)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of order creation."
         }
       },
       "required": [
@@ -86,7 +97,8 @@
         "customerPhone",
         "productIds",
         "total",
-        "status"
+        "status",
+        "createdAt"
       ]
     }
   },
@@ -147,6 +159,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support an e-commerce application named \"Noemi's Sweet Treats\" with products and orders. It follows the principles of Authorization Independence, Structural Segregation, and Access Modeling to ensure secure and scalable data management. The structure includes two main collections: `products` and `orders`.  \n\n`products` Collection: Stores product information. Security rules will ensure only authenticated admins can create, update, or delete products.\n\n`orders` Collection: Stores order information.  Customer details (name, phone, email) and product IDs are stored within each order document.  This structure enables listing orders and showing all relevant information without requiring additional reads.\n\n**Authorization Independence:** This is achieved by not relying on `get()` calls within the security rules to validate access.  Admin status is determined by the existence of a document in the `/roles_admin/{uid}` collection.  This eliminates hierarchical authorization dependencies and enables atomic operations.\n\n**QAPs (Rules are not Filters):** The structure is designed to facilitate secure list operations.  \n*   Products:  Listing products is generally open, but security rules can easily restrict modification to admin users.\n*   Orders: Only authenticated admins can list orders.  Customer data is contained within the order document so no additional `get()` calls are necessary to display order information.\n\n**DBAC (No Custom Claims):** Admin status is managed via document existence in the `/roles_admin/{uid}` collection instead of relying on custom claims. Authorization relies solely on `request.auth.uid`.\n\n**Invariants:** Timestamps (createdAt, updatedAt) and denormalized data (members) are not applicable to this model given the entities and feature set."
+    "reasoning": "The Firestore structure is designed to support an e-commerce application named \"Noemi's Sweet Treats\" with products and orders. Added stock management and creation timestamps."
   }
 }

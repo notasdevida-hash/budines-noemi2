@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from 'next/image';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/components/cart-provider';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 type Product = {
   id: string;
@@ -13,13 +13,17 @@ type Product = {
   price: number;
   imageUrl: string;
   description: string;
+  stock?: number;
 };
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { toast } = useToast();
+  const isOutOfStock = product.stock !== undefined && product.stock <= 0;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
+    
     addItem({
       id: product.id,
       name: product.name,
@@ -39,11 +43,23 @@ export function ProductCard({ product }: { product: Product }) {
           src={product.imageUrl}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          className={`object-cover transition-transform duration-500 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
         />
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <Badge variant="destructive" className="text-lg py-1 px-4">SIN STOCK</Badge>
+          </div>
+        )}
       </div>
       <CardContent className="p-5">
-        <h3 className="text-xl font-bold tracking-tight mb-2">{product.name}</h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-xl font-bold tracking-tight">{product.name}</h3>
+          {product.stock !== undefined && !isOutOfStock && (
+            <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
+              Stock: {product.stock}
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground text-sm line-clamp-2 h-10 mb-4">
           {product.description}
         </p>
@@ -55,8 +71,9 @@ export function ProductCard({ product }: { product: Product }) {
         <Button 
           onClick={handleAddToCart}
           className="w-full py-6 font-bold shadow-sm"
+          disabled={isOutOfStock}
         >
-          Agregar al carrito
+          {isOutOfStock ? "Agotado" : "Agregar al carrito"}
         </Button>
       </CardFooter>
     </Card>
