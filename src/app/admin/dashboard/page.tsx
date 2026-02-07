@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useEffect } from 'react';
+import { signOut } from 'firebase/auth';
+import { useAuth, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,21 +12,18 @@ import { OrderManager } from '@/components/admin/order-manager';
 import { ProductManager } from '@/components/admin/product-manager';
 
 export default function AdminDashboard() {
-  const [user, setUser] = useState<any>(null);
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u) {
-        setUser(u);
-      } else {
-        router.push('/admin');
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+    if (!isUserLoading && !user) {
+      router.push('/admin');
+    }
+  }, [user, isUserLoading, router]);
 
-  if (!user) return <div className="p-24 text-center">Cargando panel...</div>;
+  if (isUserLoading) return <div className="p-24 text-center">Cargando panel...</div>;
+  if (!user) return null;
 
   return (
     <div className="container mx-auto px-4 py-12">

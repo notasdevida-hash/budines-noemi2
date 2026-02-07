@@ -1,35 +1,22 @@
 
+"use client";
+
 import { ProductCard } from '@/components/product-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-
-// Initial demo products until Firestore is populated
-const DEMO_PRODUCTS = [
-  {
-    id: '1',
-    name: 'Budín de Limón',
-    price: 1500,
-    imageUrl: PlaceHolderImages[0].imageUrl,
-    description: 'Fresco, cítrico y con un glaseado irresistible de limón real.',
-  },
-  {
-    id: '2',
-    name: 'Budín de Chocolate',
-    price: 1800,
-    imageUrl: PlaceHolderImages[1].imageUrl,
-    description: 'Para los amantes del chocolate intenso, con trozos de chocolate belga.',
-  },
-  {
-    id: '3',
-    name: 'Budín de Vainilla',
-    price: 1400,
-    imageUrl: PlaceHolderImages[2].imageUrl,
-    description: 'El clásico sabor que nunca falla, suave y aromático.',
-  },
-];
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
+  const db = useFirestore();
+  
+  const productsQuery = useMemoFirebase(() => {
+    return query(collection(db, 'products'), where('active', '==', true));
+  }, [db]);
+
+  const { data: products, isLoading } = useCollection(productsQuery);
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -63,11 +50,23 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {DEMO_PRODUCTS.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-24">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {products && products.length > 0 ? (
+                products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  No hay productos disponibles en este momento.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -80,6 +79,7 @@ export default function Home() {
                 src="https://picsum.photos/seed/reposteria/800/800" 
                 alt="Proceso artesanal" 
                 className="object-cover w-full h-full"
+                data-ai-hint="bakery process"
               />
             </div>
             <div className="space-y-6">
