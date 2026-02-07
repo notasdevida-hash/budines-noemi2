@@ -11,10 +11,6 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 
-/**
- * @fileoverview Página de Checkout actualizada para usar el backend serverless.
- */
-
 export default function CheckoutPage() {
   const { items, totalPrice, cartCount } = useCart();
   const [loading, setLoading] = useState(false);
@@ -35,8 +31,8 @@ export default function CheckoutPage() {
     };
 
     try {
-      // Llamada a nuestra API Serverless
-      const response = await fetch('/api/checkout', {
+      // Llamamos a nuestro nuevo endpoint serverless
+      const response = await fetch('/api/crear-pago', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -49,7 +45,7 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (data.init_point) {
-        // Redirigir al Checkout Pro de Mercado Pago
+        // Redirigimos al Checkout Pro de Mercado Pago
         window.location.href = data.init_point;
       } else {
         throw new Error(data.error || 'Error al crear el pago');
@@ -114,7 +110,7 @@ export default function CheckoutPage() {
         <div className="space-y-8">
           <Card className="bg-secondary/10">
             <CardHeader>
-              <CardTitle>Resumen</CardTitle>
+              <CardTitle>Resumen del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {items.map((item) => (
