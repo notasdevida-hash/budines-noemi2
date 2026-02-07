@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Loader2, Edit3, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Loader2, Edit3, Image as ImageIcon, Upload, CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,14 +14,65 @@ import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, u
 import { collection, doc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 export function ProductManager() {
   const db = useFirestore();
+  const { toast } = useToast();
   const productsQuery = useMemoFirebase(() => collection(db, 'products'), [db]);
   const { data: products, isLoading } = useCollection(productsQuery);
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      toast({
+        title: "Error de configuración",
+        description: "Faltan las variables de entorno de Cloudinary.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+      const data = await response.json();
+      
+      if (data.secure_url) {
+        setTempImageUrl(data.secure_url);
+        toast({
+          title: "¡Imagen subida!",
+          description: "La foto se guardó correctamente en Cloudinary.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error al subir",
+        description: "No se pudo conectar con Cloudinary.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleAddProduct = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,7 +85,7 @@ export function ProductManager() {
       name: formData.get('name') as string,
       price: Number(formData.get('price')),
       stock: Number(formData.get('stock')),
-      imageUrl: formData.get('imageUrl') as string,
+      imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
       description: formData.get('description') as string,
       active: true,
       createdAt: new Date().toISOString(),
@@ -42,6 +93,7 @@ export function ProductManager() {
 
     setDocumentNonBlocking(newDocRef, newProduct, { merge: true });
     setIsAddOpen(false);
+    setTempImageUrl('');
   };
 
   const handleEditProduct = (e: React.FormEvent<HTMLFormElement>) => {
@@ -55,12 +107,13 @@ export function ProductManager() {
       name: formData.get('name') as string,
       price: Number(formData.get('price')),
       stock: Number(formData.get('stock')),
-      imageUrl: formData.get('imageUrl') as string,
+      imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
       description: formData.get('description') as string,
     };
 
     updateDocumentNonBlocking(docRef, updatedData);
     setEditingProduct(null);
+    setTempImageUrl('');
   };
 
   const toggleProductStatus = (productId: string, currentStatus: boolean) => {
@@ -79,7 +132,10 @@ export function ProductManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-card p-4 rounded-xl shadow-sm border">
         <h3 className="font-bold text-lg">Inventario Actual</h3>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <Dialog open={isAddOpen} onOpenChange={(open) => {
+          setIsAddOpen(open);
+          if (!open) setTempImageUrl('');
+        }}>
           <DialogTrigger asChild>
             <Button className="shadow-lg">
               <Plus className="mr-2 h-4 w-4" /> Nuevo Budín
@@ -104,13 +160,43 @@ export function ProductManager() {
                   <Input id="prod-stock" name="stock" type="number" placeholder="20" required className="py-6" />
                 </div>
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="prod-img">URL de la Imagen (Cloudinary/Unsplash)</Label>
-                <div className="relative">
-                  <Input id="prod-img" name="imageUrl" placeholder="https://..." required className="py-6 pl-10" />
-                  <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Label>Imagen del Producto</Label>
+                <div className="flex gap-2">
+                  <div className="flex-grow">
+                    <Input 
+                      name="imageUrl" 
+                      placeholder="URL de la imagen..." 
+                      value={tempImageUrl} 
+                      onChange={(e) => setTempImageUrl(e.target.value)}
+                      className="py-6"
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="h-auto"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploading ? <Loader2 className="animate-spin h-5 w-5" /> : <Upload className="h-5 w-5" />}
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleUpload} 
+                  />
                 </div>
+                {tempImageUrl && (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-green-600 font-medium">
+                    <CheckCircle2 className="h-3 w-3" /> Imagen lista para guardar
+                  </div>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="prod-desc">Descripción Artesanal</Label>
                 <Textarea id="prod-desc" name="description" placeholder="Cuéntales qué hace especial a este budín..." required className="min-h-[120px]" />
@@ -164,7 +250,10 @@ export function ProductManager() {
                       </button>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="outline" size="icon" onClick={() => setEditingProduct(prod)} className="hover:text-primary border-primary/20">
+                      <Button variant="outline" size="icon" onClick={() => {
+                        setEditingProduct(prod);
+                        setTempImageUrl(prod.imageUrl);
+                      }} className="hover:text-primary border-primary/20">
                         <Edit3 className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleDeleteProduct(prod.id)} className="text-destructive hover:bg-destructive/10">
@@ -181,7 +270,12 @@ export function ProductManager() {
 
       {/* Modal de Edición */}
       {editingProduct && (
-        <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+        <Dialog open={!!editingProduct} onOpenChange={(open) => {
+          if (!open) {
+            setEditingProduct(null);
+            setTempImageUrl('');
+          }
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold">Editar {editingProduct.name}</DialogTitle>
@@ -201,16 +295,37 @@ export function ProductManager() {
                   <Input name="stock" type="number" defaultValue={editingProduct.stock} required />
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label>URL Imagen</Label>
-                <Input name="imageUrl" defaultValue={editingProduct.imageUrl} required />
+                <Label>Imagen</Label>
+                <div className="flex gap-2">
+                  <div className="flex-grow">
+                    <Input 
+                      name="imageUrl" 
+                      value={tempImageUrl} 
+                      onChange={(e) => setTempImageUrl(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploading ? <Loader2 className="animate-spin h-4 w-4" /> : <Upload className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
+
               <div className="space-y-2">
                 <Label>Descripción</Label>
                 <Textarea name="description" defaultValue={editingProduct.description} required className="min-h-[100px]" />
               </div>
               <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setEditingProduct(null)}>Cancelar</Button>
+                <Button type="button" variant="ghost" onClick={() => {
+                  setEditingProduct(null);
+                  setTempImageUrl('');
+                }}>Cancelar</Button>
                 <Button type="submit">Actualizar Producto</Button>
               </DialogFooter>
             </form>
