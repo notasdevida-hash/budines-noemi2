@@ -10,8 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useFirestore, setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { collection, doc, increment } from 'firebase/firestore';
 
 export default function CheckoutPage() {
   const { items, totalPrice, cartCount, clearCart } = useCart();
@@ -36,8 +36,8 @@ export default function CheckoutPage() {
       customerName: formData.get('name') as string,
       customerPhone: formData.get('phone') as string,
       customerEmail: (formData.get('email') as string) || '',
-      productIds: items.map(item => item.id), // Almacenamos los IDs de los productos
-      cartDetails: items.map(item => ({ // Detalle extra para el administrador
+      productIds: items.map(item => item.id),
+      cartDetails: items.map(item => ({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
@@ -49,22 +49,29 @@ export default function CheckoutPage() {
     };
 
     try {
-      // Guardamos el pedido en Firestore de forma no bloqueante
+      // 1. Guardamos el pedido en Firestore
       setDocumentNonBlocking(newOrderRef, orderData, { merge: true });
       
+      // 2. Actualizamos el stock de cada producto de forma atómica
+      items.forEach(item => {
+        const productRef = doc(db, 'products', item.id);
+        updateDocumentNonBlocking(productRef, {
+          stock: increment(-item.quantity)
+        });
+      });
+
       toast({
         title: "¡Pedido Recibido!",
         description: "Estamos procesando tu pedido. Redirigiendo...",
       });
       
-      // Simulamos la redirección a Mercado Pago
-      // En el futuro, aquí llamarías a tu API para obtener el init_point
+      // Simulación de redirección o cierre
       setTimeout(() => {
         clearCart();
         router.push('/');
         toast({
-          title: "Simulación de Pago",
-          description: "Tu pedido ha sido registrado como 'Pendiente' en el panel admin.",
+          title: "Compra Exitosa",
+          description: "Tu pedido ha sido registrado y el stock actualizado.",
         });
       }, 2000);
       
@@ -127,7 +134,7 @@ export default function CheckoutPage() {
                     {loading ? "Procesando..." : "Confirmar Pedido"}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground mt-4">
-                    Al confirmar, tu pedido aparecerá en nuestro sistema y coordinaremos el pago.
+                    Al confirmar, el stock se reservará y coordinaremos el pago.
                   </p>
                 </div>
               </form>
@@ -161,7 +168,7 @@ export default function CheckoutPage() {
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <span className="text-primary font-bold">1</span>
               </div>
-              <p className="text-muted-foreground">Tus budines se preparan artesanalmente una vez confirmado el pedido.</p>
+              <p className="text-muted-foreground">El stock se descuenta automáticamente al confirmar la compra.</p>
             </div>
             <div className="flex gap-4">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
