@@ -7,9 +7,10 @@ import { useAuth, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, ShoppingBag, LogOut } from 'lucide-react';
+import { Package, ShoppingBag, LogOut, LayoutDashboard } from 'lucide-react';
 import { OrderManager } from '@/components/admin/order-manager';
 import { ProductManager } from '@/components/admin/product-manager';
+import { StatsOverview } from '@/components/admin/stats-overview';
 
 export default function AdminDashboard() {
   const auth = useAuth();
@@ -27,25 +28,32 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="flex justify-between items-center mb-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-bold">Panel de Gestión</h1>
-          <p className="text-muted-foreground mt-2">Bienvenida, {user.email}</p>
+          <h1 className="text-4xl font-bold tracking-tight">Panel de Gestión</h1>
+          <p className="text-muted-foreground mt-2 font-medium">Bienvenida, {user.email}</p>
         </div>
-        <Button variant="outline" onClick={() => signOut(auth)}>
+        <Button variant="outline" onClick={() => signOut(auth)} className="shadow-sm">
           <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
         </Button>
       </div>
 
-      <Tabs defaultValue="pedidos" className="space-y-8">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="pedidos">
+      <Tabs defaultValue="resumen" className="space-y-8">
+        <TabsList className="bg-muted/50 p-1 rounded-xl">
+          <TabsTrigger value="resumen" className="rounded-lg">
+            <LayoutDashboard className="mr-2 h-4 w-4" /> Resumen
+          </TabsTrigger>
+          <TabsTrigger value="pedidos" className="rounded-lg">
             <ShoppingBag className="mr-2 h-4 w-4" /> Pedidos
           </TabsTrigger>
-          <TabsTrigger value="productos">
+          <TabsTrigger value="productos" className="rounded-lg">
             <Package className="mr-2 h-4 w-4" /> Productos
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="resumen">
+          <StatsOverview />
+        </TabsContent>
         
         <TabsContent value="pedidos">
           <OrderManager />

@@ -4,10 +4,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, Calendar, User, Phone, Mail, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Separator } from '@/components/ui/separator';
 
 export function OrderManager() {
   const db = useFirestore();
@@ -18,56 +22,108 @@ export function OrderManager() {
   const { data: orders, isLoading } = useCollection(ordersQuery);
 
   return (
-    <Card>
+    <Card className="shadow-lg border-none">
       <CardHeader>
-        <CardTitle>Listado de Pedidos</CardTitle>
+        <CardTitle className="text-2xl font-bold">Gestión de Pedidos</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex justify-center p-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-muted/30">
                 <TableHead>Fecha</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Contacto</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders?.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    {order.createdAt ? format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm') : '-'}
+                <TableRow key={order.id} className="hover:bg-muted/10 transition-colors">
+                  <TableCell className="font-medium">
+                    {order.createdAt ? format(new Date(order.createdAt), 'dd MMM, HH:mm', { locale: es }) : '-'}
                   </TableCell>
-                  <TableCell className="font-medium">{order.customerName}</TableCell>
                   <TableCell>
-                    <div className="text-xs">
-                      <p>{order.customerPhone}</p>
-                      <p className="text-muted-foreground">{order.customerEmail || '-'}</p>
+                    <div className="flex flex-col">
+                      <span className="font-bold">{order.customerName}</span>
+                      <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
                     </div>
                   </TableCell>
-                  <TableCell>${order.total}</TableCell>
+                  <TableCell className="font-bold text-primary">${order.total}</TableCell>
                   <TableCell>
                     <Badge 
                       variant={
                         order.status === 'paid' ? 'default' : 
                         order.status === 'pending' ? 'secondary' : 'destructive'
                       }
+                      className="px-3 py-1"
                     >
                       {order.status === 'paid' ? 'Pagado' : 
                        order.status === 'pending' ? 'Pendiente' : 'Fallido'}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary">
+                          <Eye className="h-4 w-4 mr-2" /> Detalles
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl flex items-center gap-2">
+                            <ShoppingBag className="text-primary" /> Detalle de la Orden
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-6">
+                          <div className="space-y-4">
+                            <div className="bg-secondary/20 p-4 rounded-xl space-y-3">
+                              <h4 className="font-bold text-sm uppercase text-muted-foreground tracking-wider">Cliente</h4>
+                              <div className="space-y-2">
+                                <p className="flex items-center gap-2 text-sm"><User className="h-4 w-4 text-primary" /> {order.customerName}</p>
+                                <p className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-primary" /> {order.customerPhone}</p>
+                                {order.customerEmail && <p className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-primary" /> {order.customerEmail}</p>}
+                                <p className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-primary" /> {order.createdAt ? format(new Date(order.createdAt), 'PPPP', { locale: es }) : '-'}</p>
+                              </div>
+                            </div>
+                            <div className="p-4 rounded-xl border-2 border-dashed border-primary/20">
+                              <p className="text-sm font-bold text-muted-foreground mb-1">ID de Orden:</p>
+                              <code className="text-xs bg-muted p-1 rounded">{order.id}</code>
+                            </div>
+                          </div>
+                          <div className="space-y-4">
+                            <h4 className="font-bold text-sm uppercase text-muted-foreground tracking-wider">Productos</h4>
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                              {order.items?.map((item: any, idx: number) => (
+                                <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                                  <div>
+                                    <p className="font-bold text-sm">{item.name}</p>
+                                    <p className="text-xs text-muted-foreground">{item.quantity} x ${item.price}</p>
+                                  </div>
+                                  <p className="font-bold text-primary">${item.price * item.quantity}</p>
+                                </div>
+                              ))}
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center pt-2">
+                              <span className="text-lg font-bold">TOTAL</span>
+                              <span className="text-2xl font-black text-primary">${order.total}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
                 </TableRow>
               ))}
               {!orders?.length && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                     Aún no hay pedidos realizados.
                   </TableCell>
                 </TableRow>
