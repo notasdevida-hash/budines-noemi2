@@ -1,13 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminServices } from '@/lib/firebase-admin';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-/**
- * API DE CHECKOUT (El "Cajero")
- * 1. Anota el pedido en Firestore.
- * 2. Le pide a Mercado Pago un link para que el cliente pague.
- */
+export const dynamic = 'force-dynamic';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN || '',
@@ -15,15 +11,14 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: Request) {
   try {
+    const { adminDb } = getAdminServices();
     const { items, customerInfo, userId } = await req.json();
 
-    // 1. Creamos un ID único para este pedido
     const orderRef = adminDb.collection('orders').doc();
     const orderId = orderRef.id;
 
     const total = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
 
-    // 2. Guardamos el pedido en nuestra base de datos como "pendiente"
     const orderData = {
       id: orderId,
       userId: userId || 'invitado',
@@ -32,13 +27,12 @@ export async function POST(req: Request) {
       customerEmail: customerInfo.email || '',
       items: items,
       total: total,
-      status: 'pending', // Todavía no sabemos si pagó
+      status: 'pending',
       createdAt: new Date().toISOString(),
     };
 
     await orderRef.set(orderData);
 
-    // 3. Le decimos a Mercado Pago qué estamos vendiendo
     const preference = new Preference(client);
     
     const body = {
@@ -55,13 +49,12 @@ export async function POST(req: Request) {
         pending: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
       },
       auto_return: 'approved',
-      external_reference: orderId, // IMPORTANTE: Así MP nos dice después CUÁL pedido se pagó
+      external_reference: orderId,
       notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhook/mercadopago`,
     };
 
     const response = await preference.create({ body });
 
-    // 4. Le devolvemos el link de pago al cliente
     return NextResponse.json({ 
       id: orderId,
       init_point: response.init_point 

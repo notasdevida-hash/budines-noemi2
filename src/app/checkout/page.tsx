@@ -31,8 +31,8 @@ export default function CheckoutPage() {
     };
 
     try {
-      // Llamamos a nuestro nuevo endpoint serverless
-      const response = await fetch('/api/crear-pago', {
+      // Usamos la ruta /api/checkout que es la más robusta
+      const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -45,7 +45,6 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (data.init_point) {
-        // Redirigimos al Checkout Pro de Mercado Pago
         window.location.href = data.init_point;
       } else {
         throw new Error(data.error || 'Error al crear el pago');

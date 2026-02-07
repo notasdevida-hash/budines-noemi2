@@ -2,26 +2,32 @@
 import * as admin from 'firebase-admin';
 
 /**
- * PARTE 4: FIREBASE ADMIN (El "Jefe" del Servidor)
- * Este archivo permite que nuestra API hable con la base de datos de forma segura.
- * Solo funciona en el lado del servidor (API Routes).
+ * FIREBASE ADMIN (Configuración Segura)
+ * Esta función inicializa el SDK de Admin solo cuando es necesario.
+ * Evita errores durante el "build" de Vercel.
  */
+export function getAdminServices() {
+  if (!admin.apps.length) {
+    const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    
+    if (!serviceAccountVar) {
+      throw new Error('Falta la variable de entorno FIREBASE_SERVICE_ACCOUNT');
+    }
 
-if (!admin.apps.length) {
-  try {
-    // Intentamos leer la "llave maestra" (Service Account) desde las variables de entorno
-    const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT || '{}'
-    );
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log('✅ Firebase Admin conectado correctamente');
-  } catch (error) {
-    console.error('❌ Error al conectar Firebase Admin:', error);
+    try {
+      const serviceAccount = JSON.parse(serviceAccountVar);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      console.log('✅ Firebase Admin inicializado');
+    } catch (error) {
+      console.error('❌ Error al parsear FIREBASE_SERVICE_ACCOUNT:', error);
+      throw error;
+    }
   }
-}
 
-export const adminDb = admin.firestore();
-export const adminAuth = admin.auth();
+  return {
+    adminDb: admin.firestore(),
+    adminAuth: admin.auth(),
+  };
+}
