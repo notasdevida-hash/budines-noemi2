@@ -1,0 +1,152 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the e-commerce store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product image.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the product."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indicates whether the product is active and available for sale."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "price",
+        "imageUrl",
+        "description",
+        "active"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Name of the customer who placed the order."
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Phone number of the customer."
+        },
+        "customerEmail": {
+          "type": "string",
+          "description": "Email address of the customer (optional).",
+          "format": "email"
+        },
+        "productIds": {
+          "type": "array",
+          "description": "References to Products. (Relationship: Order 1:N Product)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "total": {
+          "type": "number",
+          "description": "Total amount of the order."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the order (pending, paid, failed)."
+        }
+      },
+      "required": [
+        "id",
+        "customerName",
+        "customerPhone",
+        "productIds",
+        "total",
+        "status"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information. Only admins can create, update, or delete products.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores order information. Only admins can list orders. Customer details are stored within the order document.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "roles_admin/{userId}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/user"
+          },
+          "description": "Indicates admin role. Existence of document grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support an e-commerce application named \"Noemi's Sweet Treats\" with products and orders. It follows the principles of Authorization Independence, Structural Segregation, and Access Modeling to ensure secure and scalable data management. The structure includes two main collections: `products` and `orders`.  \n\n`products` Collection: Stores product information. Security rules will ensure only authenticated admins can create, update, or delete products.\n\n`orders` Collection: Stores order information.  Customer details (name, phone, email) and product IDs are stored within each order document.  This structure enables listing orders and showing all relevant information without requiring additional reads.\n\n**Authorization Independence:** This is achieved by not relying on `get()` calls within the security rules to validate access.  Admin status is determined by the existence of a document in the `/roles_admin/{uid}` collection.  This eliminates hierarchical authorization dependencies and enables atomic operations.\n\n**QAPs (Rules are not Filters):** The structure is designed to facilitate secure list operations.  \n*   Products:  Listing products is generally open, but security rules can easily restrict modification to admin users.\n*   Orders: Only authenticated admins can list orders.  Customer data is contained within the order document so no additional `get()` calls are necessary to display order information.\n\n**DBAC (No Custom Claims):** Admin status is managed via document existence in the `/roles_admin/{uid}` collection instead of relying on custom claims. Authorization relies solely on `request.auth.uid`.\n\n**Invariants:** Timestamps (createdAt, updatedAt) and denormalized data (members) are not applicable to this model given the entities and feature set."
+  }
+}
