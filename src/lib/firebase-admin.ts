@@ -2,14 +2,13 @@
 import * as admin from 'firebase-admin';
 
 /**
- * @fileoverview Inicialización de Firebase Admin SDK.
- * Evita inicializaciones múltiples en entornos serverless (Vercel).
- * Utiliza variables de entorno para las credenciales de la cuenta de servicio.
+ * CONFIGURACIÓN DE FIREBASE ADMIN (El "Jefe" del Servidor)
+ * Este archivo permite que nuestra API hable con la base de datos de forma segura.
  */
 
 if (!admin.apps.length) {
   try {
-    // La variable FIREBASE_SERVICE_ACCOUNT debe ser un string JSON completo
+    // Leemos la "llave maestra" que pegaste en Vercel
     const serviceAccount = JSON.parse(
       process.env.FIREBASE_SERVICE_ACCOUNT || '{}'
     );
@@ -17,9 +16,9 @@ if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log('Firebase Admin initialized successfully');
+    console.log('✅ Firebase Admin conectado correctamente');
   } catch (error) {
-    console.error('Firebase Admin initialization error', error);
+    console.error('❌ Error al conectar Firebase Admin:', error);
   }
 }
 

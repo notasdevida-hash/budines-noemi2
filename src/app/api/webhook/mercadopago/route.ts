@@ -4,8 +4,8 @@ import { adminDb } from '@/lib/firebase-admin';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 /**
- * @fileoverview Webhook para recibir notificaciones de Mercado Pago.
- * Es la fuente de verdad absoluta para el estado de los pagos.
+ * API WEBHOOK (El "Notificador")
+ * Mercado Pago nos llama aquí para avisarnos si alguien pagó.
  */
 
 const client = new MercadoPagoConfig({
@@ -18,53 +18,38 @@ export async function POST(req: Request) {
     const type = url.searchParams.get('type');
     const dataId = url.searchParams.get('data.id');
 
-    // Mercado Pago envía notificaciones de varios tipos, nos interesa 'payment'
+    // Solo nos interesan los avisos de "pago"
     if (type !== 'payment' || !dataId) {
-      return NextResponse.json({ status: 'ignored' });
+      return NextResponse.json({ status: 'ignorado' });
     }
 
-    // 1. Consultar el pago real a la API de Mercado Pago (Seguridad)
+    // 1. Le preguntamos a Mercado Pago: "¿Es verdad este pago?"
     const payment = new Payment(client);
     const paymentData = await payment.get({ id: dataId });
 
-    const orderId = paymentData.external_reference;
-    const status = paymentData.status; // 'approved', 'rejected', etc.
+    const orderId = paymentData.external_reference; // El ID que anotamos antes
+    const status = paymentData.status; // 'approved' significa que pagó
 
-    if (!orderId) {
-      return NextResponse.json({ error: 'No external_reference found' }, { status: 400 });
-    }
+    if (!orderId) return NextResponse.json({ error: 'Sin ID de orden' }, { status: 400 });
 
-    // 2. Buscar y actualizar la orden en Firestore usando Admin SDK
+    // 2. Buscamos el pedido en nuestro "Libro de Ventas" (Firestore)
     const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderSnap = await orderRef.get();
-
-    if (!orderSnap.exists) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    // Idempotencia: No actualizar si ya está pagada
-    const currentOrder = orderSnap.data();
-    if (currentOrder?.status === 'paid') {
-      return NextResponse.json({ status: 'already_processed' });
-    }
-
-    // 3. Mapear estados de MP a nuestra lógica
-    let newStatus = 'pending';
-    if (status === 'approved') newStatus = 'paid';
-    if (status === 'rejected' || status === 'cancelled') newStatus = 'failed';
+    
+    // 3. Actualizamos el estado según lo que dijo MP
+    let nuevoEstado = 'pending';
+    if (status === 'approved') nuevoEstado = 'paid';
+    if (status === 'rejected' || status === 'cancelled') nuevoEstado = 'failed';
 
     await orderRef.update({
-      status: newStatus,
-      mp_payment_id: dataId,
+      status: nuevoEstado,
+      mp_id: dataId, // Guardamos el comprobante de MP por las dudas
       updatedAt: new Date().toISOString(),
     });
 
-    console.log(`Order ${orderId} updated to ${newStatus}`);
-
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ recibido: true });
 
   } catch (error: any) {
-    console.error('Webhook Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error en Webhook:', error);
+    return NextResponse.json({ error: 'Error procesando aviso' }, { status: 500 });
   }
 }
