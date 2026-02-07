@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "budin-limon",
+      "description": "Exquisito budín de limón artesanal con glaseado cítrico",
+      "imageUrl": "https://images.unsplash.com/photo-1728911296471-8c57f645a44e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxsZW1vbiUyMGNha2V8ZW58MHx8fHwxNzcwNDM1MzY5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "lemon cake"
+    },
+    {
+      "id": "budin-chocolate",
+      "description": "Budín de chocolate intenso con chispas de chocolate belga",
+      "imageUrl": "https://images.unsplash.com/photo-1517427294546-5aa121f68e8a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaG9jb2xhdGUlMjBjYWtlfGVufDB8fHx8MTc3MDMyNzM5Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chocolate cake"
+    },
+    {
+      "id": "budin-vainilla",
+      "description": "Clásico budín de vainilla suave y esponjoso",
+      "imageUrl": "https://images.unsplash.com/photo-1574043436847-6e18093727c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dmFuaWxsYSUyMGNha2V8ZW58MHx8fHwxNzcwMzQ3ODE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vanilla cake"
+    }
+  ]
 }
