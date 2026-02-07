@@ -30,6 +30,7 @@ export async function POST(req: Request) {
     const status = paymentData.status;
 
     if (!orderId) {
+      console.log('⚠️ Notificación sin external_reference (ID de orden).');
       return NextResponse.json({ error: 'Sin ID de orden' }, { status: 400 });
     }
 
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
     const orderSnap = await orderRef.get();
 
     if (!orderSnap.exists) {
+      console.log(`⚠️ Orden ${orderId} no encontrada en Firestore.`);
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
     }
 
@@ -58,18 +60,19 @@ export async function POST(req: Request) {
         updatedAt: new Date().toISOString(),
       });
 
-      // Descontar stock de cada producto
+      // Descontar stock de cada producto de forma atómica
       if (order?.items) {
         order.items.forEach((item: any) => {
           const productRef = adminDb.collection('products').doc(item.id);
+          // Usamos FieldValue.increment con valor negativo para restar
           batch.update(productRef, {
-            stock: admin.firestore.FieldValue.increment(-item.quantity)
+            stock: admin.firestore.FieldValue.increment(-Number(item.quantity))
           });
         });
       }
 
       await batch.commit();
-      console.log(`✅ Pedido ${orderId} pagado y stock actualizado.`);
+      console.log(`✅ Pedido ${orderId} pagado con éxito. Stock descontado.`);
     } else {
       // Si no es aprobado o ya estaba pagado, solo actualizamos el estado si cambió
       if (nuevoEstado !== oldStatus) {
@@ -78,13 +81,15 @@ export async function POST(req: Request) {
           mp_id: dataId,
           updatedAt: new Date().toISOString(),
         });
+        console.log(`ℹ️ Pedido ${orderId} actualizado a estado: ${nuevoEstado}`);
       }
     }
 
     return NextResponse.json({ recibido: true });
 
   } catch (error: any) {
-    console.error('Error en Webhook:', error);
-    return NextResponse.json({ error: 'Error procesando' }, { status: 200 }); // Retornar 200 para evitar reintentos infinitos de MP
+    console.error('❌ Error en Webhook:', error);
+    // Retornamos 200 aunque haya error para que Mercado Pago deje de reintentar si es un error de lógica
+    return NextResponse.json({ error: 'Error procesando la notificación' }, { status: 200 });
   }
 }
