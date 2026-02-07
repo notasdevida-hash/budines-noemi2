@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from ' @/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -102,7 +101,7 @@ export default function AdminPage() {
                 <Info className="h-4 w-4" />
                 <AlertTitle className="font-bold">Pasos para el desarrollador:</AlertTitle>
                 <AlertDescription className="text-xs space-y-2 mt-2">
-                  <p>1. Ve a <strong>Firebase Console</strong> > <strong>Authentication</strong> y crea un usuario con email y contraseña.</p>
+                  <p>1. Ve a <strong>Firebase Console</strong> &gt; <strong>Authentication</strong> y crea un usuario con email y contraseña.</p>
                   <p>2. Copia el <strong>User UID</strong> de ese nuevo usuario.</p>
                   <p>3. Ve a <strong>Firestore Database</strong>, crea una colección llamada <code>roles_admin</code>.</p>
                   <p>4. Crea un documento cuyo <strong>Document ID</strong> sea exactamente el <strong>UID</strong> que copiaste. (No necesita campos).</p>
