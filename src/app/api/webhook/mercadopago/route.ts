@@ -11,11 +11,6 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN || '',
 });
 
-/**
- * Webhook para Mercado Pago.
- * Procesa la notificación de pago, actualiza el estado de la orden,
- * descuenta el stock y envía el recibo por email.
- */
 export async function POST(req: Request) {
   try {
     const { adminDb } = getAdminServices();
@@ -36,7 +31,6 @@ export async function POST(req: Request) {
     const status = paymentData.status;
 
     if (!orderId) {
-      console.warn('⚠️ Webhook sin external_reference (orderId)');
       return NextResponse.json({ error: 'Sin ID de orden' }, { status: 400 });
     }
 
@@ -44,7 +38,6 @@ export async function POST(req: Request) {
     const orderSnap = await orderRef.get();
 
     if (!orderSnap.exists) {
-      console.error(`❌ Orden ${orderId} no encontrada en Firestore`);
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
     }
 
@@ -76,53 +69,27 @@ export async function POST(req: Request) {
       }
 
       await batch.commit();
-      console.log(`✅ Orden ${orderId} marcada como pagada. Iniciando proceso de recibo...`);
+      console.log(`✅ Orden ${orderId} pagada. Iniciando recibo...`);
 
-      // Intento de envío de email
       if (order?.customerEmail && process.env.RESEND_API_KEY) {
         let receipt: ReceiptOutput;
 
         try {
-          // Intentar generar con IA
           receipt = await generateReceiptContent({
             customerName: order.customerName,
             orderId: orderId,
             items: order.items,
             total: order.total,
           });
-          console.log('✨ Recibo generado con IA exitosamente.');
         } catch (aiError) {
-          console.error('⚠️ Error al generar recibo con IA:', aiError);
-          // FALLBACK: Recibo estándar si la IA falla
+          console.error('⚠️ Error IA (usando fallback):', aiError);
           receipt = {
             subject: `Confirmación de tu pedido #${orderId.slice(-6)} - Budines Noemi`,
-            body: `
-              <div style="font-family: sans-serif; padding: 20px; color: #333;">
-                <h1 style="color: #A69079;">¡Gracias por tu compra, ${order.customerName}!</h1>
-                <p>Tu pago ha sido confirmado y ya estamos preparando tus budines artesanalmente.</p>
-                <hr style="border: 1px solid #eee;" />
-                <h3>Detalle de tu pedido:</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                  ${order.items.map((item: any) => `
-                    <tr>
-                      <td style="padding: 10px 0;">${item.name} (x${item.quantity})</td>
-                      <td style="text-align: right;">$${item.price * item.quantity}</td>
-                    </tr>
-                  `).join('')}
-                  <tr>
-                    <td style="padding: 20px 0; font-weight: bold; font-size: 1.2em;">TOTAL</td>
-                    <td style="text-align: right; font-weight: bold; font-size: 1.2em; color: #A69079;">$${order.total}</td>
-                  </tr>
-                </table>
-                <p style="margin-top: 30px;">Te avisaremos cuando tu pedido esté en camino.</p>
-                <p><i>Con amor, Noemi.</i></p>
-              </div>
-            `
+            body: `<div style="font-family: sans-serif; padding: 20px; color: #333;"><h1>¡Gracias, ${order.customerName}!</h1><p>Tu pago ha sido confirmado.</p></div>`
           };
         }
 
         try {
-          console.log(`📧 Intentando enviar email a ${order.customerEmail} vía Resend...`);
           const resendResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -140,15 +107,13 @@ export async function POST(req: Request) {
           const resendData = await resendResponse.json();
           
           if (resendResponse.ok) {
-            console.log('✅ Email enviado con éxito por Resend:', resendData.id);
+            console.log('✅ Email enviado con éxito:', resendData.id);
           } else {
-            console.error('❌ Resend devolvió un error:', resendData);
+            console.error('❌ Error de Resend (Probablemente restricción de dominio):', resendData);
           }
         } catch (emailError) {
-          console.error('❌ Error crítico al conectar con la API de Resend:', emailError);
+          console.error('❌ Error crítico de conexión con Resend:', emailError);
         }
-      } else {
-        console.warn('⚠️ No se envió email: Falta el correo del cliente o la API KEY de Resend.');
       }
     } else if (nuevoEstado !== oldStatus) {
       await orderRef.update({
@@ -159,7 +124,6 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ recibido: true });
-
   } catch (error: any) {
     console.error('❌ Error crítico en Webhook:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 200 });
