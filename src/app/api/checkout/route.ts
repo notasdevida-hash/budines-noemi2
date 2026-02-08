@@ -14,11 +14,9 @@ export async function POST(req: Request) {
     const { adminDb } = getAdminServices();
     const { items, customerInfo, userId } = await req.json();
 
-    // Limpiar la URL del sitio para evitar dobles barras //
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
     
     if (!siteUrl) {
-      console.error('❌ Error: NEXT_PUBLIC_SITE_URL no está configurada');
       return NextResponse.json({ error: 'Configuración del servidor incompleta' }, { status: 500 });
     }
 
@@ -57,18 +55,14 @@ export async function POST(req: Request) {
         currency_id: 'ARS',
       })),
       back_urls: {
-        success: `${siteUrl}/`,
+        success: `${siteUrl}/thanks?orderId=${orderId}`,
         failure: `${siteUrl}/checkout`,
-        pending: `${siteUrl}/`,
+        pending: `${siteUrl}/thanks?orderId=${orderId}`,
       },
       auto_return: 'approved',
       external_reference: orderId,
-      // Mercado Pago requiere que esta URL sea HTTPS y pública
       notification_url: `${siteUrl}/api/webhook/mercadopago`,
     };
-
-    console.log(`📦 Creando preferencia para orden: ${orderId}`);
-    console.log(`🔗 Webhook URL: ${body.notification_url}`);
 
     const response = await preference.create({ body });
 
@@ -79,6 +73,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('❌ Error en Checkout:', error);
-    return NextResponse.json({ error: 'No se pudo crear el pago. Revisa las variables de entorno.' }, { status: 500 });
+    return NextResponse.json({ error: 'No se pudo crear el pago.' }, { status: 500 });
   }
 }
