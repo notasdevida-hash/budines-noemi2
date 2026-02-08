@@ -11,6 +11,11 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN || '',
 });
 
+/**
+ * WEBHOOK DE MERCADO PAGO
+ * Procesa notificaciones de pago y actualiza Firestore.
+ * Genera un recibo por IA si el pago es aprobado.
+ */
 export async function POST(req: Request) {
   try {
     const { adminDb } = getAdminServices();
@@ -18,10 +23,12 @@ export async function POST(req: Request) {
     const type = url.searchParams.get('type');
     const dataId = url.searchParams.get('data.id');
 
+    // Solo nos interesan las notificaciones de pagos
     if (type !== 'payment' || !dataId) {
       return NextResponse.json({ status: 'ignorado' });
     }
 
+    // Consultar el estado real del pago en Mercado Pago (Seguridad)
     const payment = new Payment(client);
     const paymentData = await payment.get({ id: dataId });
 
@@ -46,15 +53,18 @@ export async function POST(req: Request) {
     if (status === 'approved') nuevoEstado = 'paid';
     if (status === 'rejected' || status === 'cancelled') nuevoEstado = 'failed';
 
+    // ACCIÓN: Si el pago se aprobó y antes no lo estaba
     if (nuevoEstado === 'paid' && oldStatus !== 'paid') {
       const batch = adminDb.batch();
       
+      // 1. Actualizar la orden
       batch.update(orderRef, {
         status: 'paid',
         mp_id: dataId,
         updatedAt: new Date().toISOString(),
       });
 
+      // 2. Descontar Stock automáticamente
       if (order?.items) {
         order.items.forEach((item: any) => {
           const productRef = adminDb.collection('products').doc(item.id);
@@ -65,8 +75,9 @@ export async function POST(req: Request) {
       }
 
       await batch.commit();
+      console.log(`✅ Orden ${orderId} pagada y stock actualizado.`);
 
-      // Enviar recibo si hay email
+      // 3. GENERAR RECIBO POR IA (Solo si hay email)
       if (order?.customerEmail) {
         try {
           const receipt = await generateReceiptContent({
@@ -76,28 +87,28 @@ export async function POST(req: Request) {
             total: order.total,
           });
           
-          console.log(`📧 Generando recibo para ${order.customerEmail}`);
+          console.log(`📧 RECIBO GENERADO PARA: ${order.customerEmail}`);
           console.log(`Asunto: ${receipt.subject}`);
-          // Aquí se conectaría con un servicio como Resend/SendGrid usando receipt.body
-          // resend.emails.send({ from: 'Noemi <hola@budinesnoemi.com>', to: order.customerEmail, ...receipt });
+          // Aquí integrarías con un proveedor de email como Resend
+          // await resend.emails.send({ to: order.customerEmail, subject: receipt.subject, html: receipt.body });
         } catch (aiError) {
-          console.error('Error al generar recibo con AI:', aiError);
+          console.error('❌ Error al generar recibo con IA:', aiError);
         }
       }
-    } else {
-      if (nuevoEstado !== oldStatus) {
-        await orderRef.update({
-          status: nuevoEstado,
-          mp_id: dataId,
-          updatedAt: new Date().toISOString(),
-        });
-      }
+    } else if (nuevoEstado !== oldStatus) {
+      // Si el estado cambió pero no a 'paid' (ej: falló)
+      await orderRef.update({
+        status: nuevoEstado,
+        mp_id: dataId,
+        updatedAt: new Date().toISOString(),
+      });
     }
 
     return NextResponse.json({ recibido: true });
 
   } catch (error: any) {
-    console.error('❌ Error en Webhook:', error);
+    console.error('❌ Error crítico en Webhook:', error);
+    // Respondemos 200 para que Mercado Pago no reintente infinitamente si es un error controlado
     return NextResponse.json({ error: 'Error interno' }, { status: 200 });
   }
 }

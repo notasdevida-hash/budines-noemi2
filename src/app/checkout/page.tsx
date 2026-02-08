@@ -14,7 +14,7 @@ import { ShoppingBag, ArrowLeft, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
-  const { items, totalPrice, cartCount, clearCart } = useCart();
+  const { items, totalPrice, cartCount } = useCart();
   const [loading, setLoading] = useState(false);
   const { user } = useUser();
   const { toast } = useToast();
@@ -46,9 +46,6 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (data.init_point) {
-        // Guardamos intención de compra y limpiamos carrito local
-        // Nota: El carrito se limpia aquí para que si el usuario vuelve, no tenga duplicados.
-        // Pero en una app real podrías esperar a que vuelva de MP.
         window.location.href = data.init_point;
       } else {
         throw new Error(data.error || 'Error al crear el pago');
@@ -70,7 +67,7 @@ export default function CheckoutPage() {
         <div className="bg-secondary/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
           <ShoppingBag className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h2 className="text-3xl font-bold mb-4">Tu carrito está vacío</h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">Tu carrito está vacío</h2>
         <p className="text-muted-foreground mb-8">¡Agrega algunos budines deliciosos para continuar!</p>
         <Button asChild size="lg">
           <Link href="/"><ArrowLeft className="mr-2 h-4 w-4" /> Volver a la tienda</Link>
@@ -80,14 +77,14 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-12 text-center text-primary">Finalizar Compra</h1>
+    <div className="container mx-auto px-4 py-8 md:py-12 mt-16 md:mt-24">
+      <h1 className="text-3xl md:text-4xl font-black mb-8 md:mb-12 text-center text-primary uppercase tracking-tighter">Finalizar Compra</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-        <div className="space-y-8">
-          <Card className="border-t-4 border-t-primary shadow-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
+        <div className="order-2 lg:order-1 space-y-8">
+          <Card className="border-t-4 border-t-primary shadow-xl rounded-[2rem]">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-xl">
                 <CreditCard className="h-5 w-5 text-primary" />
                 Información del Cliente
               </CardTitle>
@@ -96,25 +93,25 @@ export default function CheckoutPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nombre Completo *</Label>
-                  <Input id="name" name="name" placeholder="Ej: Noemi Garcia" required className="py-6" />
+                  <Input id="name" name="name" placeholder="Ej: Noemi Garcia" required className="py-6 rounded-xl" />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono de Contacto *</Label>
-                  <Input id="phone" name="phone" placeholder="Ej: 11 1234 5678" required className="py-6" />
+                  <Input id="phone" name="phone" placeholder="Ej: 11 1234 5678" required className="py-6 rounded-xl" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email (opcional para recibir el recibo)</Label>
-                  <Input id="email" name="email" type="email" placeholder="tu@email.com" className="py-6" />
+                  <Label htmlFor="email">Email (para recibir tu recibo 📧)</Label>
+                  <Input id="email" name="email" type="email" placeholder="tu@email.com" className="py-6 rounded-xl" />
                 </div>
 
                 <div className="pt-4">
-                  <Button type="submit" className="w-full py-8 text-xl font-bold shadow-xl transition-transform hover:scale-[1.02]" disabled={loading}>
-                    {loading ? "Preparando pago seguro..." : "Pagar con Mercado Pago"}
+                  <Button type="submit" className="w-full py-8 text-xl font-black rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-95" disabled={loading}>
+                    {loading ? "PREPARANDO PAGO..." : "PAGAR CON MERCADO PAGO"}
                   </Button>
-                  <p className="text-[10px] text-center text-muted-foreground mt-4">
-                    Al hacer clic, serás redirigido a la plataforma segura de Mercado Pago.
+                  <p className="text-[10px] text-center text-muted-foreground mt-4 uppercase font-bold tracking-widest">
+                    Pago seguro procesado por Mercado Pago
                   </p>
                 </div>
               </form>
@@ -122,34 +119,34 @@ export default function CheckoutPage() {
           </Card>
         </div>
 
-        <div className="space-y-8">
-          <Card className="bg-secondary/10 border-dashed border-2 shadow-inner">
+        <div className="order-1 lg:order-2 space-y-8">
+          <Card className="bg-secondary/10 border-dashed border-2 shadow-inner rounded-[2rem]">
             <CardHeader>
-              <CardTitle>Resumen del Pedido</CardTitle>
+              <CardTitle className="text-xl">Resumen del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="max-h-[300px] overflow-y-auto space-y-4 pr-2">
+              <div className="max-h-[300px] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center bg-background p-3 rounded-lg border">
+                  <div key={item.id} className="flex justify-between items-center bg-background p-4 rounded-2xl border shadow-sm">
                     <div className="flex flex-col">
-                      <span className="font-bold text-sm">{item.name}</span>
+                      <span className="font-black text-sm uppercase tracking-tight">{item.name}</span>
                       <span className="text-xs text-muted-foreground">{item.quantity} un. x ${item.price}</span>
                     </div>
-                    <span className="font-bold text-primary">${item.price * item.quantity}</span>
+                    <span className="font-black text-primary text-lg">${item.price * item.quantity}</span>
                   </div>
                 ))}
               </div>
               
-              <Separator />
+              <Separator className="bg-primary/20" />
               
               <div className="space-y-2">
-                <div className="flex justify-between text-sm text-muted-foreground">
+                <div className="flex justify-between text-sm font-bold text-muted-foreground">
                   <span>Subtotal</span>
                   <span>${totalPrice}</span>
                 </div>
-                <div className="flex justify-between text-2xl font-black pt-2">
+                <div className="flex justify-between text-3xl font-black pt-2 text-primary tracking-tighter">
                   <span>TOTAL</span>
-                  <span className="text-primary">${totalPrice}</span>
+                  <span>${totalPrice}</span>
                 </div>
               </div>
             </CardContent>
