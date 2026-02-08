@@ -11,11 +11,6 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN || '',
 });
 
-/**
- * WEBHOOK DE MERCADO PAGO
- * Procesa notificaciones de pago y actualiza Firestore.
- * Genera un recibo por IA si el pago es aprobado.
- */
 export async function POST(req: Request) {
   try {
     const { adminDb } = getAdminServices();
@@ -23,12 +18,12 @@ export async function POST(req: Request) {
     const type = url.searchParams.get('type');
     const dataId = url.searchParams.get('data.id');
 
-    // Solo nos interesan las notificaciones de pagos
     if (type !== 'payment' || !dataId) {
       return NextResponse.json({ status: 'ignorado' });
     }
 
-    // Consultar el estado real del pago en Mercado Pago (Seguridad)
+    console.log(`🔔 Webhook recibido: Pago ID ${dataId}`);
+
     const payment = new Payment(client);
     const paymentData = await payment.get({ id: dataId });
 
@@ -36,6 +31,7 @@ export async function POST(req: Request) {
     const status = paymentData.status;
 
     if (!orderId) {
+      console.warn('⚠️ Webhook sin external_reference (orderId)');
       return NextResponse.json({ error: 'Sin ID de orden' }, { status: 400 });
     }
 
@@ -43,6 +39,7 @@ export async function POST(req: Request) {
     const orderSnap = await orderRef.get();
 
     if (!orderSnap.exists) {
+      console.error(`❌ Orden ${orderId} no encontrada en Firestore`);
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
     }
 
@@ -53,31 +50,29 @@ export async function POST(req: Request) {
     if (status === 'approved') nuevoEstado = 'paid';
     if (status === 'rejected' || status === 'cancelled') nuevoEstado = 'failed';
 
-    // ACCIÓN: Si el pago se aprobó y antes no lo estaba
     if (nuevoEstado === 'paid' && oldStatus !== 'paid') {
       const batch = adminDb.batch();
       
-      // 1. Actualizar la orden
       batch.update(orderRef, {
         status: 'paid',
         mp_id: dataId,
         updatedAt: new Date().toISOString(),
       });
 
-      // 2. Descontar Stock automáticamente
       if (order?.items) {
         order.items.forEach((item: any) => {
-          const productRef = adminDb.collection('products').doc(item.id);
-          batch.update(productRef, {
-            stock: admin.firestore.FieldValue.increment(-Number(item.quantity))
-          });
+          if (item.id) {
+            const productRef = adminDb.collection('products').doc(item.id);
+            batch.update(productRef, {
+              stock: admin.firestore.FieldValue.increment(-Number(item.quantity))
+            });
+          }
         });
       }
 
       await batch.commit();
-      console.log(`✅ Orden ${orderId} pagada y stock actualizado.`);
+      console.log(`✅ Orden ${orderId} procesada con éxito.`);
 
-      // 3. GENERAR RECIBO POR IA (Solo si hay email)
       if (order?.customerEmail) {
         try {
           const receipt = await generateReceiptContent({
@@ -86,17 +81,12 @@ export async function POST(req: Request) {
             items: order.items,
             total: order.total,
           });
-          
-          console.log(`📧 RECIBO GENERADO PARA: ${order.customerEmail}`);
-          console.log(`Asunto: ${receipt.subject}`);
-          // Aquí integrarías con un proveedor de email como Resend
-          // await resend.emails.send({ to: order.customerEmail, subject: receipt.subject, html: receipt.body });
+          console.log(`📧 Recibo generado para ${order.customerEmail}`);
         } catch (aiError) {
-          console.error('❌ Error al generar recibo con IA:', aiError);
+          console.error('❌ Error IA Recibo:', aiError);
         }
       }
     } else if (nuevoEstado !== oldStatus) {
-      // Si el estado cambió pero no a 'paid' (ej: falló)
       await orderRef.update({
         status: nuevoEstado,
         mp_id: dataId,
@@ -108,7 +98,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('❌ Error crítico en Webhook:', error);
-    // Respondemos 200 para que Mercado Pago no reintente infinitamente si es un error controlado
     return NextResponse.json({ error: 'Error interno' }, { status: 200 });
   }
 }

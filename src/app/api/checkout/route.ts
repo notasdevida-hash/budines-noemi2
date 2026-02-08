@@ -14,10 +14,18 @@ export async function POST(req: Request) {
     const { adminDb } = getAdminServices();
     const { items, customerInfo, userId } = await req.json();
 
+    // Limpiar la URL del sitio para evitar dobles barras //
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
+    
+    if (!siteUrl) {
+      console.error('❌ Error: NEXT_PUBLIC_SITE_URL no está configurada');
+      return NextResponse.json({ error: 'Configuración del servidor incompleta' }, { status: 500 });
+    }
+
     const orderRef = adminDb.collection('orders').doc();
     const orderId = orderRef.id;
 
-    const total = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+    const total = items.reduce((acc: number, item: any) => acc + (Number(item.price) * Number(item.quantity)), 0);
 
     const orderData = {
       id: orderId,
@@ -25,7 +33,12 @@ export async function POST(req: Request) {
       customerName: customerInfo.name,
       customerPhone: customerInfo.phone,
       customerEmail: customerInfo.email || '',
-      items: items,
+      items: items.map((i: any) => ({
+        id: i.id,
+        name: i.name,
+        price: Number(i.price),
+        quantity: Number(i.quantity)
+      })),
       total: total,
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -44,14 +57,18 @@ export async function POST(req: Request) {
         currency_id: 'ARS',
       })),
       back_urls: {
-        success: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
-        failure: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout`,
-        pending: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
+        success: `${siteUrl}/`,
+        failure: `${siteUrl}/checkout`,
+        pending: `${siteUrl}/`,
       },
       auto_return: 'approved',
       external_reference: orderId,
-      notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhook/mercadopago`,
+      // Mercado Pago requiere que esta URL sea HTTPS y pública
+      notification_url: `${siteUrl}/api/webhook/mercadopago`,
     };
+
+    console.log(`📦 Creando preferencia para orden: ${orderId}`);
+    console.log(`🔗 Webhook URL: ${body.notification_url}`);
 
     const response = await preference.create({ body });
 
@@ -61,7 +78,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('Error en Checkout:', error);
-    return NextResponse.json({ error: 'No se pudo crear el pago' }, { status: 500 });
+    console.error('❌ Error en Checkout:', error);
+    return NextResponse.json({ error: 'No se pudo crear el pago. Revisa las variables de entorno.' }, { status: 500 });
   }
 }

@@ -7,45 +7,15 @@
       "type": "object",
       "description": "Represents a product in the e-commerce store.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the product."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the product."
-        },
-        "price": {
-          "type": "number",
-          "description": "Price of the product."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the product image.",
-          "format": "uri"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the product."
-        },
-        "active": {
-          "type": "boolean",
-          "description": "Indicates whether the product is active and available for sale."
-        },
-        "stock": {
-          "type": "number",
-          "description": "Available quantity in stock."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "description": { "type": "string" },
+        "active": { "type": "boolean" },
+        "stock": { "type": "number" }
       },
-      "required": [
-        "id",
-        "name",
-        "price",
-        "imageUrl",
-        "description",
-        "active",
-        "stock"
-      ]
+      "required": ["id", "name", "price", "imageUrl", "description", "active", "stock"]
     },
     "Order": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -53,60 +23,31 @@
       "type": "object",
       "description": "Represents a customer order.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the order."
-        },
-        "customerName": {
-          "type": "string",
-          "description": "Name of the customer who placed the order."
-        },
-        "customerPhone": {
-          "type": "string",
-          "description": "Phone number of the customer."
-        },
-        "customerEmail": {
-          "type": "string",
-          "description": "Email address of the customer (optional).",
-          "format": "email"
-        },
-        "productIds": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string", "format": "email" },
+        "items": {
           "type": "array",
-          "description": "References to Products. (Relationship: Order 1:N Product)",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "quantity": { "type": "number" }
+            }
           }
         },
-        "total": {
-          "type": "number",
-          "description": "Total amount of the order."
-        },
-        "status": {
-          "type": "string",
-          "description": "Status of the order (pending, paid, failed)."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of order creation."
-        }
+        "total": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "customerName",
-        "customerPhone",
-        "productIds",
-        "total",
-        "status",
-        "createdAt"
-      ]
+      "required": ["id", "customerName", "customerPhone", "items", "total", "status", "createdAt"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
@@ -114,51 +55,26 @@
         "path": "products/{productId}",
         "definition": {
           "entityName": "Product",
-          "schema": {
-            "$ref": "#/backend/entities/Product"
-          },
-          "description": "Stores product information. Only admins can create, update, or delete products.",
-          "params": [
-            {
-              "name": "productId",
-              "description": "Unique identifier for the product."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/Product" },
+          "description": "Stores product information."
         }
       },
       {
         "path": "orders/{orderId}",
         "definition": {
           "entityName": "Order",
-          "schema": {
-            "$ref": "#/backend/entities/Order"
-          },
-          "description": "Stores order information. Only admins can list orders. Customer details are stored within the order document.",
-          "params": [
-            {
-              "name": "orderId",
-              "description": "Unique identifier for the order."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/Order" },
+          "description": "Stores order information."
         }
       },
       {
         "path": "roles_admin/{userId}",
         "definition": {
           "entityName": "roles_admin",
-          "schema": {
-            "$ref": "#/backend/entities/user"
-          },
-          "description": "Indicates admin role. Existence of document grants admin privileges.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            }
-          ]
+          "schema": { "type": "object" },
+          "description": "Admin access control."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to support an e-commerce application named \"Noemi's Sweet Treats\" with products and orders. Added stock management and creation timestamps."
+    ]
   }
 }
