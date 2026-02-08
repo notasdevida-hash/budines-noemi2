@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle } from 'lucide-react';
+import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle, Utensils } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import Image from 'next/image';
 
 export default function Home() {
   const db = useFirestore();
@@ -28,7 +29,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section - Optimized for Mobile */}
+      {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1578985543813-689480955d88?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]"></div>
@@ -118,6 +119,60 @@ export default function Home() {
         </div>
       </section>
 
+      {/* About Us Section */}
+      <section id="nosotros" className="py-24 bg-white overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div 
+              {...fadeIn}
+              className="relative aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl"
+            >
+              <Image 
+                src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000&auto=format&fit=crop" 
+                alt="Noemi en su cocina" 
+                fill 
+                className="object-cover"
+                data-ai-hint="baker kitchen"
+              />
+              <div className="absolute bottom-8 left-8 right-8 bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-xl">
+                <p className="text-primary font-black text-xl italic">"La cocina es el lenguaje del amor."</p>
+                <p className="text-sm font-bold mt-2">- Noemi Garcia</p>
+              </div>
+            </motion.div>
+            
+            <motion.div {...fadeIn} className="space-y-8">
+              <div>
+                <span className="text-primary font-bold tracking-widest uppercase text-sm">Nuestra Historia</span>
+                <h2 className="text-4xl md:text-6xl font-black mt-2 leading-tight">Pasión por lo <span className="text-primary">Artesanal</span></h2>
+              </div>
+              
+              <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
+                <p>
+                  Todo comenzó en la cocina de mi abuela, donde el aroma a vainilla y limón inundaba cada rincón los domingos por la tarde. Esas tardes de aprendizaje se convirtieron en mi mayor pasión.
+                </p>
+                <p>
+                  Hoy, **Budines Noemi** es el resultado de años de perfeccionar recetas familiares. No usamos conservantes ni procesos industriales; cada budín que sale de nuestro horno es único, esponjoso y está lleno de sabor real.
+                </p>
+                <p>
+                  Nuestro compromiso es simple: llevar a tu mesa un producto que te haga sentir como en casa, con ingredientes de primera calidad y el toque especial que solo lo hecho a mano puede ofrecer.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 pt-4">
+                <div className="space-y-2">
+                  <h4 className="font-black text-3xl text-primary">15+</h4>
+                  <p className="text-sm font-bold uppercase tracking-tighter">Años de Tradición</p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-black text-3xl text-primary">50k</h4>
+                  <p className="text-sm font-bold uppercase tracking-tighter">Meriendas Felices</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-6">
@@ -160,6 +215,12 @@ export default function Home() {
               <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Cómo es el envío?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground pb-6">
                 Enviamos en CABA y GBA Norte de lunes a sábados. Si compras antes de las 11:00 AM, llega el mismo día.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3" className="bg-white px-6 rounded-2xl border-none shadow-sm">
+              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Cuánto duran los budines?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground pb-6">
+                Nuestros budines se mantienen perfectos por 3-4 días a temperatura ambiente bien cerrados, o hasta 7 días en heladera.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
