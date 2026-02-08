@@ -40,9 +40,9 @@ Datos del pedido:
 - ID de Orden: {{{orderId}}}
 - Productos:
 {{#each items}}
-  * {{{name}}} (x{{{quantity}}}) - ${{{price}}} c/u
+  * {{{name}}} (x{{{quantity}}}) - \${{{price}}} c/u
 {{/each}}
-- Total pagado: ${{{total}}}
+- Total pagado: \${{{total}}}
 
 Genera un asunto llamativo y un cuerpo de mensaje en HTML (usa estilos en línea básicos) que incluya una tabla de productos y un mensaje final invitándolos a disfrutar sus budines.`,
 });
