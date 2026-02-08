@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       }
 
       await batch.commit();
-      console.log(`✅ Orden ${orderId} marcada como pagada.`);
+      console.log(`✅ Orden ${orderId} marcada como pagada. Iniciando proceso de recibo...`);
 
       // Intento de envío de email
       if (order?.customerEmail && process.env.RESEND_API_KEY) {
@@ -90,8 +90,9 @@ export async function POST(req: Request) {
             items: order.items,
             total: order.total,
           });
+          console.log('✨ Recibo generado con IA exitosamente.');
         } catch (aiError) {
-          console.error('⚠️ La IA falló (posible cuota excedida). Usando recibo de respaldo.');
+          console.error('⚠️ Error al generar recibo con IA:', aiError);
           // FALLBACK: Recibo estándar si la IA falla
           receipt = {
             subject: `Confirmación de tu pedido #${orderId.slice(-6)} - Budines Noemi`,
@@ -121,8 +122,8 @@ export async function POST(req: Request) {
         }
 
         try {
-          console.log(`📧 Enviando recibo a ${order.customerEmail}...`);
-          await fetch('https://api.resend.com/emails', {
+          console.log(`📧 Intentando enviar email a ${order.customerEmail} vía Resend...`);
+          const resendResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -135,9 +136,19 @@ export async function POST(req: Request) {
               html: receipt.body,
             }),
           });
+
+          const resendData = await resendResponse.json();
+          
+          if (resendResponse.ok) {
+            console.log('✅ Email enviado con éxito por Resend:', resendData.id);
+          } else {
+            console.error('❌ Resend devolvió un error:', resendData);
+          }
         } catch (emailError) {
-          console.error('❌ Error final al enviar email:', emailError);
+          console.error('❌ Error crítico al conectar con la API de Resend:', emailError);
         }
+      } else {
+        console.warn('⚠️ No se envió email: Falta el correo del cliente o la API KEY de Resend.');
       }
     } else if (nuevoEstado !== oldStatus) {
       await orderRef.update({
