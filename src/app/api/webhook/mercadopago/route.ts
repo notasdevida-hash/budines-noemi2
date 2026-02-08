@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getAdminServices } from '@/lib/firebase-admin';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import * as admin from 'firebase-admin';
-import { generateReceiptContent } from '@/ai/flows/send-receipt-flow';
+import { generateReceiptContent, ReceiptOutput } from '@/ai/flows/send-receipt-flow';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ const client = new MercadoPagoConfig({
 /**
  * Webhook para Mercado Pago.
  * Procesa la notificación de pago, actualiza el estado de la orden,
- * descuenta el stock y envía el recibo por email generado por IA.
+ * descuenta el stock y envía el recibo por email.
  */
 export async function POST(req: Request) {
   try {
@@ -23,7 +23,6 @@ export async function POST(req: Request) {
     const type = url.searchParams.get('type');
     const dataId = url.searchParams.get('data.id');
 
-    // Solo procesamos eventos de tipo 'payment'
     if (type !== 'payment' || !dataId) {
       return NextResponse.json({ status: 'ignorado' });
     }
@@ -56,18 +55,15 @@ export async function POST(req: Request) {
     if (status === 'approved') nuevoEstado = 'paid';
     if (status === 'rejected' || status === 'cancelled') nuevoEstado = 'failed';
 
-    // Si el pago es aprobado y no estaba marcado como pagado previamente
     if (nuevoEstado === 'paid' && oldStatus !== 'paid') {
       const batch = adminDb.batch();
       
-      // 1. Actualizar estado de la orden
       batch.update(orderRef, {
         status: 'paid',
         mp_id: dataId,
         updatedAt: new Date().toISOString(),
       });
 
-      // 2. Descontar stock de los productos
       if (order?.items) {
         order.items.forEach((item: any) => {
           if (item.id) {
@@ -80,21 +76,53 @@ export async function POST(req: Request) {
       }
 
       await batch.commit();
-      console.log(`✅ Orden ${orderId} marcada como pagada y stock actualizado.`);
+      console.log(`✅ Orden ${orderId} marcada como pagada.`);
 
-      // 3. Generar y Enviar recibo por Email usando IA y Resend
+      // Intento de envío de email
       if (order?.customerEmail && process.env.RESEND_API_KEY) {
+        let receipt: ReceiptOutput;
+
         try {
-          const receipt = await generateReceiptContent({
+          // Intentar generar con IA
+          receipt = await generateReceiptContent({
             customerName: order.customerName,
             orderId: orderId,
             items: order.items,
             total: order.total,
           });
+        } catch (aiError) {
+          console.error('⚠️ La IA falló (posible cuota excedida). Usando recibo de respaldo.');
+          // FALLBACK: Recibo estándar si la IA falla
+          receipt = {
+            subject: `Confirmación de tu pedido #${orderId.slice(-6)} - Budines Noemi`,
+            body: `
+              <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                <h1 style="color: #A69079;">¡Gracias por tu compra, ${order.customerName}!</h1>
+                <p>Tu pago ha sido confirmado y ya estamos preparando tus budines artesanalmente.</p>
+                <hr style="border: 1px solid #eee;" />
+                <h3>Detalle de tu pedido:</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                  ${order.items.map((item: any) => `
+                    <tr>
+                      <td style="padding: 10px 0;">${item.name} (x${item.quantity})</td>
+                      <td style="text-align: right;">$${item.price * item.quantity}</td>
+                    </tr>
+                  `).join('')}
+                  <tr>
+                    <td style="padding: 20px 0; font-weight: bold; font-size: 1.2em;">TOTAL</td>
+                    <td style="text-align: right; font-weight: bold; font-size: 1.2em; color: #A69079;">$${order.total}</td>
+                  </tr>
+                </table>
+                <p style="margin-top: 30px;">Te avisaremos cuando tu pedido esté en camino.</p>
+                <p><i>Con amor, Noemi.</i></p>
+              </div>
+            `
+          };
+        }
 
+        try {
           console.log(`📧 Enviando recibo a ${order.customerEmail}...`);
-
-          const emailResponse = await fetch('https://api.resend.com/emails', {
+          await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -107,21 +135,11 @@ export async function POST(req: Request) {
               html: receipt.body,
             }),
           });
-
-          if (emailResponse.ok) {
-            console.log(`✅ Recibo enviado con éxito a ${order.customerEmail}`);
-          } else {
-            const errorData = await emailResponse.json();
-            console.error('❌ Error al enviar email via Resend:', errorData);
-          }
-        } catch (aiError) {
-          console.error('❌ Error en el flujo de envío de recibo:', aiError);
+        } catch (emailError) {
+          console.error('❌ Error final al enviar email:', emailError);
         }
-      } else {
-        console.warn('⚠️ No se envió recibo: falta email del cliente o RESEND_API_KEY');
       }
     } else if (nuevoEstado !== oldStatus) {
-      // Si el estado cambió a algo que no sea 'paid' (ej: fallido)
       await orderRef.update({
         status: nuevoEstado,
         mp_id: dataId,
