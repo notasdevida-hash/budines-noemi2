@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getAdminServices } from '@/lib/firebase-admin';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import * as admin from 'firebase-admin';
+import { generateReceiptContent } from '@/ai/flows/send-receipt-flow';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,12 +18,10 @@ export async function POST(req: Request) {
     const type = url.searchParams.get('type');
     const dataId = url.searchParams.get('data.id');
 
-    // Solo procesamos avisos de pagos
     if (type !== 'payment' || !dataId) {
       return NextResponse.json({ status: 'ignorado' });
     }
 
-    // 1. Consultar estado real del pago a Mercado Pago
     const payment = new Payment(client);
     const paymentData = await payment.get({ id: dataId });
 
@@ -30,7 +29,6 @@ export async function POST(req: Request) {
     const status = paymentData.status;
 
     if (!orderId) {
-      console.log('⚠️ Notificación sin external_reference (ID de orden).');
       return NextResponse.json({ error: 'Sin ID de orden' }, { status: 400 });
     }
 
@@ -38,7 +36,6 @@ export async function POST(req: Request) {
     const orderSnap = await orderRef.get();
 
     if (!orderSnap.exists) {
-      console.log(`⚠️ Orden ${orderId} no encontrada en Firestore.`);
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
     }
 
@@ -49,22 +46,18 @@ export async function POST(req: Request) {
     if (status === 'approved') nuevoEstado = 'paid';
     if (status === 'rejected' || status === 'cancelled') nuevoEstado = 'failed';
 
-    // 2. Si el pago es aprobado y el pedido NO estaba pagado aún, descontamos stock
     if (nuevoEstado === 'paid' && oldStatus !== 'paid') {
       const batch = adminDb.batch();
       
-      // Actualizar el estado del pedido
       batch.update(orderRef, {
         status: 'paid',
         mp_id: dataId,
         updatedAt: new Date().toISOString(),
       });
 
-      // Descontar stock de cada producto de forma atómica
       if (order?.items) {
         order.items.forEach((item: any) => {
           const productRef = adminDb.collection('products').doc(item.id);
-          // Usamos FieldValue.increment con valor negativo para restar
           batch.update(productRef, {
             stock: admin.firestore.FieldValue.increment(-Number(item.quantity))
           });
@@ -72,16 +65,32 @@ export async function POST(req: Request) {
       }
 
       await batch.commit();
-      console.log(`✅ Pedido ${orderId} pagado con éxito. Stock descontado.`);
+
+      // Enviar recibo si hay email
+      if (order?.customerEmail) {
+        try {
+          const receipt = await generateReceiptContent({
+            customerName: order.customerName,
+            orderId: orderId,
+            items: order.items,
+            total: order.total,
+          });
+          
+          console.log(`📧 Generando recibo para ${order.customerEmail}`);
+          console.log(`Asunto: ${receipt.subject}`);
+          // Aquí se conectaría con un servicio como Resend/SendGrid usando receipt.body
+          // resend.emails.send({ from: 'Noemi <hola@budinesnoemi.com>', to: order.customerEmail, ...receipt });
+        } catch (aiError) {
+          console.error('Error al generar recibo con AI:', aiError);
+        }
+      }
     } else {
-      // Si no es aprobado o ya estaba pagado, solo actualizamos el estado si cambió
       if (nuevoEstado !== oldStatus) {
         await orderRef.update({
           status: nuevoEstado,
           mp_id: dataId,
           updatedAt: new Date().toISOString(),
         });
-        console.log(`ℹ️ Pedido ${orderId} actualizado a estado: ${nuevoEstado}`);
       }
     }
 
@@ -89,7 +98,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('❌ Error en Webhook:', error);
-    // Retornamos 200 aunque haya error para que Mercado Pago deje de reintentar si es un error de lógica
-    return NextResponse.json({ error: 'Error procesando la notificación' }, { status: 200 });
+    return NextResponse.json({ error: 'Error interno' }, { status: 200 });
   }
 }
