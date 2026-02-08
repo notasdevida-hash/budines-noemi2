@@ -1,21 +1,23 @@
+
 # Budines Noemi - E-commerce
 
 Este proyecto cuenta con una integración completa de pagos con Mercado Pago y gestión de inventario en Firestore.
 
-## Configuración de Variables de Entorno (Vercel)
+## Configuración de Variables de Envorno (Vercel)
 
-Para que el sistema de pagos funcione, debes agregar estas variables en tu panel de Vercel:
+Para que el sistema funcione correctamente, debes agregar estas variables en tu panel de Vercel:
 
-1. **`MP_ACCESS_TOKEN`**: Tu Access Token de Mercado Pago (lo sacas de tu Panel de Desarrollador de MP).
-2. **`FIREBASE_SERVICE_ACCOUNT`**: 
-   - Ve a Firebase Console > Project Settings > Service Accounts.
-   - Click en "Generate new private key".
-   - Abre el JSON descargado, copia todo su contenido y pégalo aquí.
-3. **`NEXT_PUBLIC_SITE_URL`**: La URL de tu sitio (ej: `https://tu-web.vercel.app`).
+1. **`MP_ACCESS_TOKEN`**: Tu Access Token de Mercado Pago (Panel de Desarrollador).
+2. **`FIREBASE_SERVICE_ACCOUNT`**: El JSON completo de tu llave privada de Firebase.
+3. **`NEXT_PUBLIC_SITE_URL`**: La URL de tu sitio (ej: `https://tu-web.vercel.app`) SIN barra final.
+4. **`RESEND_API_KEY`**: Tu API Key de Resend.com para enviar los recibos por email.
+5. **`NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`**: Tu Cloud Name de Cloudinary.
+6. **`NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`**: Tu Upload Preset (Unsigned) de Cloudinary.
 
-## Estructura del Backend Serverless
-- `/api/crear-pago`: Crea la orden en Firestore y genera el link de Mercado Pago.
-- `/api/webhook-mercadopago`: Recibe las notificaciones de pago y actualiza el estado automáticamente.
+## Estructura del Backend
+- `/api/checkout`: Crea la orden y la preferencia de Mercado Pago.
+- `/api/webhook/mercadopago`: Procesa pagos, descuenta stock y envía recibos por email mediante GenAI.
 
-## Gestión de Admin
-Para entrar al panel `/admin`, recuerda crear un usuario en Auth y agregarlo a la colección `roles_admin` en Firestore.
+## Notas de Envío de Emails
+- Si usas la cuenta gratuita de Resend sin dominio verificado, solo podrás enviar correos desde `onboarding@resend.dev`.
+- Para enviar a cualquier cliente, debes verificar tu dominio en el panel de Resend.
