@@ -42,12 +42,12 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
-  // Priorizamos el slug para la URL, pero usamos el ID si no existe
+  // El enlace siempre usa el slug si existe, o el ID como respaldo
   const productUrl = `/products/${product.slug || product.id}`;
 
   return (
     <Card className="group overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-500 bg-card flex flex-col h-full rounded-[2rem]">
-      <Link href={productUrl} className="flex-grow flex flex-col">
+      <Link href={productUrl} className="flex-grow flex flex-col no-underline">
         <div className="relative aspect-[4/5] overflow-hidden">
           <Image
             src={product.imageUrl}
@@ -63,7 +63,7 @@ export function ProductCard({ product }: { product: Product }) {
             ) : (
               <Badge variant="secondary" className="text-xs py-1 px-4 rounded-full font-black bg-white/90 backdrop-blur-sm text-primary uppercase shadow-lg">Artesanal</Badge>
             )}
-            {product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
+            {!isOutOfStock && product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
               <Badge className="text-xs py-1 px-4 rounded-full font-black bg-amber-500 text-white uppercase shadow-lg animate-pulse">¡Últimos {product.stock}!</Badge>
             )}
           </div>
@@ -82,7 +82,7 @@ export function ProductCard({ product }: { product: Product }) {
         
         <CardContent className="p-8 pb-4 flex-grow">
           <div className="space-y-3">
-            <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors leading-tight">
+            <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors leading-tight text-foreground">
               {product.name}
             </h3>
             <p className="text-muted-foreground text-sm line-clamp-2 h-10">

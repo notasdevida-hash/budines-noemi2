@@ -2,28 +2,26 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
 
 /**
- * @fileoverview Redireccionador de compatibilidad.
- * Redirige de /products/ID a /products/ID (que ahora es manejado por [slug]).
- * Esto evita conflictos de rutas en Next.js.
+ * @fileoverview Redireccionador de seguridad.
+ * Esta página ya no se usa para evitar conflictos con [slug].
+ * Redirige cualquier tráfico residual a la ruta maestra.
  */
 
-export default function ProductIdRedirect() {
-  const { productId } = useParams();
+export default function ProductIdCleaner() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.productId as string;
 
   useEffect(() => {
-    if (productId) {
-      router.replace(`/products/${productId}`);
+    if (id) {
+      router.replace(`/products/${id}`);
+    } else {
+      router.replace('/');
     }
-  }, [productId, router]);
+  }, [id, router]);
 
-  return (
-    <div className="flex justify-center items-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  return null;
 }
