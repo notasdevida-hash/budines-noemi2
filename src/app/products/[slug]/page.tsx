@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
 
 /**
  * @fileoverview Página maestra de detalles de producto.
- * Esta ruta única maneja tanto IDs de Firestore como Slugs de SEO.
+ * Maneja tanto IDs de Firestore como Slugs de SEO en una única ruta dinámica.
  */
 
 export default function ProductDetailPage() {
@@ -33,10 +33,9 @@ export default function ProductDetailPage() {
 
   const { data: productById, isLoading: isLoadingId } = useDoc(docRef);
 
-  // 2. Si no hay resultado por ID (o mientras carga), buscamos por el campo 'slug'
+  // 2. Buscamos por el campo 'slug' en paralelo
   const slugQuery = useMemoFirebase(() => {
     if (!db || !identifier) return null;
-    // Solo buscamos por slug si ya sabemos que no cargó por ID o para estar seguros
     return query(collection(db, 'products'), where('slug', '==', identifier), limit(1));
   }, [db, identifier]);
 
@@ -44,22 +43,25 @@ export default function ProductDetailPage() {
   
   // El producto final es el que venga por ID o el primero de la búsqueda por slug
   const product = productById || productsBySlug?.[0];
-  const isLoading = isLoadingId && isLoadingSlug;
+  
+  // Lógica de carga corregida: seguimos cargando mientras no tengamos el producto 
+  // y al menos una de las búsquedas siga activa.
+  const isCurrentlyLoading = !product && (isLoadingId || isLoadingSlug);
 
-  if (isLoading) {
+  if (isCurrentlyLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[80vh] gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Preparando dulzura...</p>
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground animate-pulse">Preparando dulzura...</p>
       </div>
     );
   }
 
-  if (!product) {
+  if (!product && !isCurrentlyLoading) {
     return (
       <div className="container mx-auto px-4 py-24 text-center mt-20">
         <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">Budín no encontrado</h2>
-        <p className="mb-8 text-muted-foreground font-medium">No pudimos encontrar la delicia que buscas. Puede que se haya agotado o la hayamos movido.</p>
+        <p className="mb-8 text-muted-foreground font-medium">No pudimos encontrar la delicia que buscas.</p>
         <Button onClick={() => router.push('/')} className="rounded-full px-10 py-6 text-lg font-bold shadow-xl">
           Volver a la tienda
         </Button>
@@ -67,10 +69,11 @@ export default function ProductDetailPage() {
     );
   }
 
-  const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+  const isOutOfStock = product?.stock !== undefined && product?.stock <= 0;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://budinesnoemi.com';
 
   const handleAddToCart = () => {
+    if (!product) return;
     addItem({
       id: product.id,
       name: product.name,
@@ -82,6 +85,8 @@ export default function ProductDetailPage() {
       description: `${product.name} se sumó a tu carrito.`,
     });
   };
+
+  if (!product) return null;
 
   return (
     <div className="container mx-auto px-4 py-12 mt-20 md:mt-28">
@@ -136,18 +141,6 @@ export default function ProductDetailPage() {
               <Badge variant="destructive" className="text-2xl py-3 px-8 rounded-full font-black uppercase shadow-2xl">SIN STOCK</Badge>
             </div>
           )}
-          <div className="absolute bottom-6 left-6">
-             <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg flex items-center gap-2">
-                <div className="flex text-yellow-500">
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                </div>
-                <span className="text-xs font-black uppercase tracking-tighter">5.0 (Venta Destacada)</span>
-             </div>
-          </div>
         </motion.div>
 
         {/* Información Detallada */}
@@ -168,14 +161,6 @@ export default function ProductDetailPage() {
             </h1>
             <div className="flex items-center gap-6 pt-2">
               <p className="text-6xl font-black text-primary tracking-tighter">${product.price}</p>
-              {product.stock !== undefined && !isOutOfStock && (
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Quedan solo</span>
-                  <Badge variant="outline" className="font-bold text-sm border-primary/50 text-primary px-3 rounded-lg">
-                    {product.stock} unidades
-                  </Badge>
-                </div>
-              )}
             </div>
           </header>
 
@@ -196,21 +181,6 @@ export default function ProductDetailPage() {
               <ShoppingCart className="h-8 w-8" />
               {isOutOfStock ? "PRODUCTO AGOTADO" : "AGREGAR AL CARRITO"}
             </Button>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div className="p-5 bg-secondary/30 rounded-3xl border border-primary/10 flex items-center gap-4">
-                  <div className="bg-primary/20 p-2 rounded-xl text-primary">
-                    <Star className="w-5 h-5 fill-current" />
-                  </div>
-                  <p className="text-[11px] font-bold uppercase leading-tight tracking-tight">Ingredientes 100% Naturales</p>
-               </div>
-               <div className="p-5 bg-secondary/30 rounded-3xl border border-primary/10 flex items-center gap-4">
-                  <div className="bg-primary/20 p-2 rounded-xl text-primary">
-                    <Heart className="w-5 h-5 fill-current" />
-                  </div>
-                  <p className="text-[11px] font-bold uppercase leading-tight tracking-tight">Hecho a mano en Buenos Aires</p>
-               </div>
-            </div>
           </div>
         </div>
       </div>

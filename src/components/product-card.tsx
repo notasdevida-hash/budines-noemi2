@@ -42,12 +42,11 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
-  // El enlace siempre usa el slug si existe, o el ID como respaldo
   const productUrl = `/products/${product.slug || product.id}`;
 
   return (
     <Card className="group overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-500 bg-card flex flex-col h-full rounded-[2rem]">
-      <Link href={productUrl} className="flex-grow flex flex-col no-underline">
+      <Link href={productUrl} className="flex-grow flex flex-col no-underline relative z-10">
         <div className="relative aspect-[4/5] overflow-hidden">
           <Image
             src={product.imageUrl}
@@ -63,20 +62,6 @@ export function ProductCard({ product }: { product: Product }) {
             ) : (
               <Badge variant="secondary" className="text-xs py-1 px-4 rounded-full font-black bg-white/90 backdrop-blur-sm text-primary uppercase shadow-lg">Artesanal</Badge>
             )}
-            {!isOutOfStock && product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
-              <Badge className="text-xs py-1 px-4 rounded-full font-black bg-amber-500 text-white uppercase shadow-lg animate-pulse">¡Últimos {product.stock}!</Badge>
-            )}
-          </div>
-          
-          <div className="absolute bottom-4 left-4 right-4 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-             <div className="flex items-center gap-1 text-yellow-400 drop-shadow-md">
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <span className="text-white text-xs font-bold ml-1">(5.0)</span>
-             </div>
           </div>
         </div>
         
@@ -85,18 +70,17 @@ export function ProductCard({ product }: { product: Product }) {
             <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors leading-tight text-foreground">
               {product.name}
             </h3>
-            <p className="text-muted-foreground text-sm line-clamp-2 h-10">
+            <p className="text-muted-foreground text-sm line-clamp-2">
               {product.description}
             </p>
             <div className="flex items-baseline gap-2 pt-2">
               <span className="text-3xl font-black text-primary">${product.price}</span>
-              <span className="text-xs text-muted-foreground line-through opacity-50">$ {(product.price * 1.2).toFixed(0)}</span>
             </div>
           </div>
         </CardContent>
       </Link>
       
-      <CardFooter className="p-8 pt-4">
+      <CardFooter className="p-8 pt-4 relative z-20">
         <Button 
           onClick={handleAddToCart}
           className="w-full py-8 text-lg font-black rounded-2xl shadow-xl transition-all hover:scale-[1.03] group/btn"
