@@ -30,12 +30,12 @@ export function Navbar() {
       <div className={cn(
         "container mx-auto h-20 flex items-center justify-between rounded-[2.5rem] px-8 transition-all duration-500",
         isScrolled 
-          ? "bg-white/80 backdrop-blur-xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] border border-white/40" 
-          : "bg-transparent border border-transparent"
+          ? "bg-white/95 backdrop-blur-xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] border border-white/40" 
+          : "bg-black/20 backdrop-blur-sm border border-white/10"
       )}>
         <Link href="/" className={cn(
           "text-3xl font-black tracking-tighter transition-colors flex items-center gap-3",
-          isScrolled ? "text-primary" : "text-white md:text-white"
+          isScrolled ? "text-primary" : "text-white"
         )}>
           <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg">
             <Heart className="fill-current w-6 h-6" />
@@ -45,7 +45,7 @@ export function Navbar() {
         
         <div className={cn(
           "hidden md:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.3em] transition-colors",
-          isScrolled ? "text-muted-foreground" : "text-white/80"
+          isScrolled ? "text-muted-foreground" : "text-white/90"
         )}>
           <Link href="/#productos" className="hover:text-primary transition-colors cursor-pointer">Productos</Link>
           <Link href="/#nosotros" className="hover:text-primary transition-colors cursor-pointer">Nuestra Historia</Link>
@@ -60,7 +60,7 @@ export function Navbar() {
                 size="icon" 
                 className={cn(
                   "relative w-14 h-14 rounded-full transition-all duration-300",
-                  isScrolled ? "bg-primary text-white shadow-xl" : "glass text-white border-white/20"
+                  isScrolled ? "bg-primary text-white shadow-xl" : "bg-white/20 text-white border border-white/30 hover:bg-white/40"
                 )}
               >
                 <ShoppingCart className="h-6 w-6" />
@@ -70,7 +70,7 @@ export function Navbar() {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black h-6 w-6 rounded-full flex items-center justify-center border-4 border-white shadow-xl"
+                      className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black h-6 w-6 rounded-full flex items-center justify-center border-2 border-white shadow-xl"
                     >
                       {cartCount}
                     </motion.span>
@@ -80,7 +80,7 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col rounded-l-[4rem] border-none shadow-2xl glass">
               <SheetHeader className="pb-8 border-b border-black/5">
-                <SheetTitle className="text-4xl font-black tracking-tighter uppercase">Tu Carrito</SheetTitle>
+                <SheetTitle className="text-4xl font-black tracking-tighter uppercase text-primary">Tu Carrito</SheetTitle>
               </SheetHeader>
               <div className="flex-grow mt-8 overflow-y-auto">
                 <CartItems />

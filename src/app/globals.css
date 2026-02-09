@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%; 
-    --foreground: 20 10% 10%;
+    --background: 30 30% 98%; 
+    --foreground: 25 30% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 20 10% 10%;
+    --card-foreground: 25 30% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 20 10% 10%;
-    --primary: 32 23% 56%; 
-    --primary-foreground: 60 20% 98%;
-    --secondary: 45 40% 96%;
-    --secondary-foreground: 32 23% 40%;
-    --muted: 60 10% 96%;
-    --muted-foreground: 32 10% 45%;
-    --accent: 32 23% 90%;
-    --accent-foreground: 32 23% 30%;
+    --popover-foreground: 25 30% 15%;
+    --primary: 25 35% 35%; 
+    --primary-foreground: 30 30% 98%;
+    --secondary: 30 30% 94%;
+    --secondary-foreground: 25 35% 25%;
+    --muted: 30 10% 90%;
+    --muted-foreground: 25 10% 40%;
+    --accent: 25 35% 92%;
+    --accent-foreground: 25 35% 25%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 32 10% 92%;
-    --input: 32 10% 92%;
-    --ring: 32 23% 56%;
-    --radius: 2rem;
+    --border: 25 20% 90%;
+    --input: 25 20% 90%;
+    --ring: 25 35% 35%;
+    --radius: 2.5rem;
   }
 }
 
@@ -38,15 +38,15 @@
 }
 
 .glass {
-  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+  @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)];
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#A69079] to-[#7d6b58];
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#5D4037] to-[#8D6E63];
 }
 
 .soft-shadow {
-  shadow-box: 0 20px 40px -15px rgba(0,0,0,0.05);
+  box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05);
 }
 
 .premium-card {
