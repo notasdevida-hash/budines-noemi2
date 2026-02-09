@@ -2,21 +2,19 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 /**
- * @fileoverview Redirección de Slugs a IDs.
- * Para evitar conflictos de rutas gemelas en Next.js.
+ * @fileoverview ARCHIVO DESACTIVADO
+ * Se mantiene vacío para evitar conflictos con la ruta principal [productId].
+ * Redirecciona al inicio si alguien intenta acceder por una URL de slug antigua.
  */
-export default function SlugRedirect() {
-  const params = useParams();
+export default function SlugCleanup() {
   const router = useRouter();
 
   useEffect(() => {
-    if (params.slug) {
-      router.replace(`/products/${params.slug}`);
-    }
-  }, [params, router]);
+    router.replace('/');
+  }, [router]);
 
   return null;
 }

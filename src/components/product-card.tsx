@@ -42,7 +42,6 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
-  // Revertido a usar el ID directo
   const productUrl = `/products/${product.id}`;
 
   return (

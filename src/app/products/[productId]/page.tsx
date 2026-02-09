@@ -12,10 +12,6 @@ import { Loader2, ArrowLeft, ShoppingCart, Heart, CheckCircle2 } from 'lucide-re
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 
-/**
- * @fileoverview PÁGINA DE DETALLE DE PRODUCTO (RESTAURADA)
- * Usa el ID directo de Firestore para evitar conflictos de navegación.
- */
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.productId as string;
