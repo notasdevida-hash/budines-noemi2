@@ -29,7 +29,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
+      {/* Hero Section - Optimizada con palabras clave H1 */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1578985543813-689480955d88?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]"></div>
@@ -41,17 +41,17 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter text-white mb-6 drop-shadow-2xl">
-              Budines <span className="text-secondary">Noemi</span>
+              Budines <span className="text-secondary">Artesanales</span> Noemi
             </h1>
             <p className="text-base sm:text-xl md:text-2xl text-white/90 font-medium max-w-2xl mx-auto mb-10 leading-relaxed px-4">
-              El sabor de lo casero, horneado con el corazón y entregado en la puerta de tu casa.
+              Los mejores budines caseros de Buenos Aires, horneados con amor y entregados en CABA y GBA.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center px-6">
               <Button asChild size="lg" className="w-full sm:w-auto px-10 py-7 text-lg font-bold rounded-full shadow-2xl">
-                <Link href="#productos">Explorar Menú</Link>
+                <Link href="#productos">Ver Menú de Budines</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="w-full sm:w-auto px-10 py-7 text-lg font-bold rounded-full bg-white/10 text-white border-white/20 hover:bg-white/20 transition-all backdrop-blur-md">
-                <Link href="#nosotros">Nuestra Historia</Link>
+                <Link href="#nosotros">Nuestra Historia en Buenos Aires</Link>
               </Button>
             </div>
           </motion.div>
@@ -63,9 +63,9 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             {[
-              { icon: ChefHat, title: "Receta Original", desc: "Secretos familiares transmitidos por generaciones." },
-              { icon: Heart, title: "100% Artesanal", desc: "Sin conservantes, solo ingredientes naturales y frescos." },
-              { icon: Truck, title: "Envíos Rápidos", desc: "Recibilo hoy mismo, recién salido del horno." }
+              { icon: ChefHat, title: "Receta Original", desc: "Budines artesanales con secretos familiares de generaciones." },
+              { icon: Heart, title: "Ingredientes Naturales", desc: "100% caseros, sin conservantes ni procesos industriales." },
+              { icon: Truck, title: "Envíos en CABA y GBA", desc: "Recibí tu budín recién horneado hoy mismo en tu casa." }
             ].map((item, i) => (
               <motion.div 
                 key={i} 
@@ -88,8 +88,8 @@ export default function Home() {
       <section id="productos" className="py-20 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col items-center mb-12 text-center">
-            <motion.span {...fadeIn} className="text-primary font-bold tracking-widest uppercase mb-2 text-sm">Nuestro Menú</motion.span>
-            <motion.h2 {...fadeIn} className="text-3xl md:text-6xl font-black mb-6">Tentaciones de Hoy</motion.h2>
+            <motion.span {...fadeIn} className="text-primary font-bold tracking-widest uppercase mb-2 text-sm">Nuestro Menú de Hoy</motion.span>
+            <motion.h2 {...fadeIn} className="text-3xl md:text-6xl font-black mb-6">Budines Caseros Disponibles</motion.h2>
             <div className="w-16 h-1 bg-primary rounded-full mb-6"></div>
           </div>
 
@@ -111,7 +111,7 @@ export default function Home() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12 text-muted-foreground text-lg">
-                  Estamos horneando nuevas delicias. ¡Vuelve pronto!
+                  Estamos horneando nuevas delicias artesanales. ¡Vuelve pronto!
                 </div>
               )}
             </div>
@@ -129,7 +129,7 @@ export default function Home() {
             >
               <Image 
                 src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000&auto=format&fit=crop" 
-                alt="Noemi en su cocina" 
+                alt="Noemi Garcia - Elaboración de budines caseros en Buenos Aires" 
                 fill 
                 className="object-cover"
                 data-ai-hint="baker kitchen"
@@ -142,30 +142,27 @@ export default function Home() {
             
             <motion.div {...fadeIn} className="space-y-8">
               <div>
-                <span className="text-primary font-bold tracking-widest uppercase text-sm">Nuestra Historia</span>
-                <h2 className="text-4xl md:text-6xl font-black mt-2 leading-tight">Pasión por lo <span className="text-primary">Artesanal</span></h2>
+                <span className="text-primary font-bold tracking-widest uppercase text-sm">Desde 2008</span>
+                <h2 className="text-4xl md:text-6xl font-black mt-2 leading-tight">Pasión por los <span className="text-primary">Budines Caseros</span></h2>
               </div>
               
               <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
                 <p>
-                  Todo comenzó en la cocina de mi abuela, donde el aroma a vainilla y limón inundaba cada rincón los domingos por la tarde. Esas tardes de aprendizaje se convirtieron en mi mayor pasión.
+                  Todo comenzó en mi cocina de Buenos Aires, donde el aroma a vainilla y limón inundaba cada rincón los domingos por la tarde. Lo que empezó como un hobby para la familia se convirtió en **Budines Noemi**.
                 </p>
                 <p>
-                  Hoy, **Budines Noemi** es el resultado de años de perfeccionar recetas familiares. No usamos conservantes ni procesos industriales; cada budín que sale de nuestro horno es único, esponjoso y está lleno de sabor real.
-                </p>
-                <p>
-                  Nuestro compromiso es simple: llevar a tu mesa un producto que te haga sentir como en casa, con ingredientes de primera calidad y el toque especial que solo lo hecho a mano puede ofrecer.
+                  Hoy, mis budines son el resultado de años de perfeccionar recetas tradicionales. No uso conservantes ni químicos; cada producto es una pieza única de repostería artesanal argentina.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-6 pt-4">
                 <div className="space-y-2">
                   <h4 className="font-black text-3xl text-primary">15+</h4>
-                  <p className="text-sm font-bold uppercase tracking-tighter">Años de Tradición</p>
+                  <p className="text-sm font-bold uppercase tracking-tighter">Años horneando</p>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-black text-3xl text-primary">50k</h4>
-                  <p className="text-sm font-bold uppercase tracking-tighter">Meriendas Felices</p>
+                  <h4 className="font-black text-3xl text-primary">CABA</h4>
+                  <p className="text-sm font-bold uppercase tracking-tighter">Zona de Entregas</p>
                 </div>
               </div>
             </motion.div>
@@ -176,12 +173,12 @@ export default function Home() {
       {/* Testimonials Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-6">
-          <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 px-4">Lo que dicen nuestros clientes</h2>
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 px-4">Testimonios de amantes del budín</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: "Lucía M.", text: "El budín de limón es increíble, tiene el equilibrio justo de humedad. ¡No duró ni 10 minutos!" },
-              { name: "Carlos R.", text: "Se nota la calidad de los ingredientes. El de chocolate belga es de otro planeta." },
-              { name: "Marta S.", text: "Excelente atención y los budines llegan tibios. Un mimo para el alma." }
+              { name: "Lucía M. (Palermo)", text: "El budín de limón es increíble, tiene el equilibrio justo de humedad. ¡El mejor de todo Buenos Aires!" },
+              { name: "Carlos R. (San Isidro)", text: "Se nota la calidad de los ingredientes caseros. El de chocolate belga es de otro planeta." },
+              { name: "Marta S. (Belgrano)", text: "Excelente atención y los budines llegan tibios. Un mimo para el alma artesanal." }
             ].map((t, i) => (
               <motion.div 
                 key={i} 
@@ -203,24 +200,18 @@ export default function Home() {
       {/* FAQ Section */}
       <section className="py-20 bg-secondary/10">
         <div className="container mx-auto px-6 max-w-3xl">
-          <h2 className="text-2xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter px-4">Preguntas Frecuentes</h2>
+          <h2 className="text-2xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter px-4">Preguntas Frecuentes sobre envíos</h2>
           <Accordion type="single" collapsible className="w-full space-y-4">
-            <AccordionItem value="item-1" className="bg-white px-6 rounded-2xl border-none shadow-sm">
-              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Tienen opciones para celíacos?</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground pb-6">
-                Actualmente nuestra cocina maneja harinas de trigo, por lo que no podemos garantizar la ausencia de contaminación cruzada.
-              </AccordionContent>
-            </AccordionItem>
             <AccordionItem value="item-2" className="bg-white px-6 rounded-2xl border-none shadow-sm">
-              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Cómo es el envío?</AccordionTrigger>
+              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿A qué zonas de Buenos Aires envían?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground pb-6">
-                Enviamos en CABA y GBA Norte de lunes a sábados. Si compras antes de las 11:00 AM, llega el mismo día.
+                Realizamos envíos en toda la Capital Federal (CABA) y zona norte de GBA. Si comprás antes de las 11:00 AM, el envío llega el mismo día.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3" className="bg-white px-6 rounded-2xl border-none shadow-sm">
-              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Cuánto duran los budines?</AccordionTrigger>
+              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Cómo conservar los budines caseros?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground pb-6">
-                Nuestros budines se mantienen perfectos por 3-4 días a temperatura ambiente bien cerrados, o hasta 7 días en heladera.
+                Al ser 100% naturales, se mantienen frescos por 3-4 días a temperatura ambiente en su empaque original, o hasta 7 días en heladera.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -231,15 +222,15 @@ export default function Home() {
       <section className="py-24 bg-primary relative overflow-hidden">
         <div className="container mx-auto px-6 relative z-10 text-center text-primary-foreground space-y-8">
           <motion.h2 className="text-4xl md:text-7xl font-black tracking-tight px-4" {...fadeIn}>
-            ¿Listo para merendar?
+            ¿Ganas de algo dulce y casero?
           </motion.h2>
           <motion.div {...fadeIn} className="pt-8 flex flex-col sm:flex-row justify-center gap-4 px-6">
             <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto px-12 py-8 text-xl font-black rounded-full shadow-2xl hover:scale-105 transition-transform">
-              <Link href="#productos">PEDIR AHORA</Link>
+              <Link href="#productos">COMPRAR BUDINES AHORA</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto px-10 py-8 text-lg font-bold rounded-full bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all">
-              <Link href="https://wa.me/tu-numero" target="_blank">
-                <MessageCircle className="mr-2" /> WhatsApp
+              <Link href="https://wa.me/5491112345678" target="_blank">
+                <MessageCircle className="mr-2" /> Consultas por WhatsApp
               </Link>
             </Button>
           </motion.div>

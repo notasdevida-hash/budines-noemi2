@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 
 /**
  * @fileoverview Página de detalles de un producto específico.
- * Permite ver la descripción completa, el stock y añadir al carrito.
+ * Optimizada para SEO con Schema.org y Metadata dinámica.
  */
 
 export default function ProductDetailPage() {
@@ -47,6 +48,7 @@ export default function ProductDetailPage() {
   }
 
   const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://budinesnoemi.com';
 
   const handleAddToCart = () => {
     addItem({
@@ -63,6 +65,33 @@ export default function ProductDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
+      {/* Schema.org para Google Rich Results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.name,
+            "image": [product.imageUrl],
+            "description": product.description,
+            "sku": product.id,
+            "brand": {
+              "@type": "Brand",
+              "name": "Budines Noemi"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": `${siteUrl}/products/${product.id}`,
+              "priceCurrency": "ARS",
+              "price": product.price,
+              "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+              "itemCondition": "https://schema.org/NewCondition"
+            }
+          })
+        }}
+      />
+
       <Button variant="ghost" onClick={() => router.back()} className="mb-8 hover:bg-secondary">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver a la tienda
       </Button>
@@ -72,9 +101,10 @@ export default function ProductDetailPage() {
         <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl bg-muted border border-border">
           <Image
             src={product.imageUrl}
-            alt={product.name}
+            alt={`${product.name} artesanal - Budines Noemi`}
             fill
             className={`object-cover transition-opacity duration-500 ${isOutOfStock ? 'grayscale opacity-60' : 'opacity-100'}`}
+            priority
           />
           {isOutOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -85,7 +115,7 @@ export default function ProductDetailPage() {
 
         {/* Información del Producto */}
         <div className="space-y-8">
-          <div>
+          <header>
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">{product.name}</h1>
             <div className="flex items-center gap-4">
               <p className="text-4xl font-bold text-primary">${product.price}</p>
@@ -95,14 +125,14 @@ export default function ProductDetailPage() {
                 </Badge>
               )}
             </div>
-          </div>
+          </header>
 
-          <div className="prose prose-neutral max-w-none border-t pt-6">
-            <h3 className="text-xl font-bold mb-4">Descripción Artesanal</h3>
+          <section className="prose prose-neutral max-w-none border-t pt-6">
+            <h2 className="text-xl font-bold mb-4">Descripción Artesanal de este {product.name}</h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
               {product.description}
             </p>
-          </div>
+          </section>
 
           <div className="pt-8 space-y-4">
             <Button 
@@ -118,7 +148,7 @@ export default function ProductDetailPage() {
             <div className="p-4 bg-secondary/20 rounded-lg border border-primary/10">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                Horneado hoy mismo con ingredientes 100% naturales.
+                Budín artesanal horneado en Buenos Aires con ingredientes premium.
               </p>
             </div>
           </div>
