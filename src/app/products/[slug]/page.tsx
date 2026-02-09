@@ -8,15 +8,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, ShoppingCart, Star, Heart, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, ShoppingCart, Heart, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 
 /**
- * @fileoverview Página maestra de detalles de producto.
- * Maneja tanto IDs de Firestore como Slugs de SEO en una única ruta dinámica.
+ * @fileoverview PÁGINA MAESTRA DE PRODUCTO
+ * Resuelve el producto ya sea por su ID de Firestore o por su Slug SEO.
  */
-
 export default function ProductDetailPage() {
   const params = useParams();
   const identifier = params.slug as string;
@@ -25,30 +24,26 @@ export default function ProductDetailPage() {
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  // 1. Intentamos obtener el documento directamente asumiendo que el identifier podría ser un ID
-  const docRef = useMemoFirebase(() => {
-    if (!db || !identifier) return null;
-    return doc(db, 'products', identifier);
-  }, [db, identifier]);
-
-  const { data: productById, isLoading: isLoadingId } = useDoc(docRef);
-
-  // 2. Buscamos por el campo 'slug' en paralelo
+  // Intentamos buscar por Slug primero (más común para SEO)
   const slugQuery = useMemoFirebase(() => {
     if (!db || !identifier) return null;
     return query(collection(db, 'products'), where('slug', '==', identifier), limit(1));
   }, [db, identifier]);
 
-  const { data: productsBySlug, isLoading: isLoadingSlug } = useCollection(slugQuery);
-  
-  // El producto final es el que venga por ID o el primero de la búsqueda por slug
-  const product = productById || productsBySlug?.[0];
-  
-  // Lógica de carga corregida: seguimos cargando mientras no tengamos el producto 
-  // y al menos una de las búsquedas siga activa.
-  const isCurrentlyLoading = !product && (isLoadingId || isLoadingSlug);
+  const { data: slugResults, isLoading: isLoadingSlug } = useCollection(slugQuery);
 
-  if (isCurrentlyLoading) {
+  // Si no hay resultados por slug, intentamos por ID
+  const docRef = useMemoFirebase(() => {
+    if (!db || !identifier || (slugResults && slugResults.length > 0)) return null;
+    return doc(db, 'products', identifier);
+  }, [db, identifier, slugResults]);
+
+  const { data: productById, isLoading: isLoadingId } = useDoc(docRef);
+
+  const product = (slugResults && slugResults.length > 0) ? slugResults[0] : productById;
+  const isLoading = isLoadingSlug || (isLoadingId && !slugResults);
+
+  if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[80vh] gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -57,7 +52,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (!product && !isCurrentlyLoading) {
+  if (!product) {
     return (
       <div className="container mx-auto px-4 py-24 text-center mt-20">
         <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">Budín no encontrado</h2>
@@ -70,10 +65,8 @@ export default function ProductDetailPage() {
   }
 
   const isOutOfStock = product?.stock !== undefined && product?.stock <= 0;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://budinesnoemi.com';
 
   const handleAddToCart = () => {
-    if (!product) return;
     addItem({
       id: product.id,
       name: product.name,
@@ -86,54 +79,21 @@ export default function ProductDetailPage() {
     });
   };
 
-  if (!product) return null;
-
   return (
     <div className="container mx-auto px-4 py-12 mt-20 md:mt-28">
-      {/* SEO Dinámico con JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org/",
-            "@type": "Product",
-            "name": product.name,
-            "image": [product.imageUrl],
-            "description": product.description,
-            "sku": product.id,
-            "brand": { "@type": "Brand", "name": "Budines Noemi" },
-            "offers": {
-              "@type": "Offer",
-              "url": `${siteUrl}/products/${product.slug || product.id}`,
-              "priceCurrency": "ARS",
-              "price": product.price,
-              "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
-            }
-          })
-        }}
-      />
-
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
         <Button variant="ghost" onClick={() => router.push('/#productos')} className="mb-8 hover:bg-secondary rounded-full font-bold group">
           <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> Volver al Menú
         </Button>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start max-w-6xl mx-auto">
-        {/* Galería de Imagen */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative aspect-square rounded-[3.5rem] overflow-hidden shadow-2xl bg-muted border-8 border-white group"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative aspect-square rounded-[3.5rem] overflow-hidden shadow-2xl bg-muted border-8 border-white group">
           <Image
             src={product.imageUrl}
-            alt={`${product.name} artesanal - Budines Noemi`}
+            alt={product.name}
             fill
-            className={`object-cover transition-transform duration-1000 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : 'opacity-100'}`}
+            className={`object-cover transition-transform duration-1000 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
             priority
           />
           {isOutOfStock && (
@@ -143,7 +103,6 @@ export default function ProductDetailPage() {
           )}
         </motion.div>
 
-        {/* Información Detallada */}
         <div className="space-y-8 py-4">
           <header className="space-y-4">
             <div className="flex flex-wrap gap-2">
@@ -152,29 +111,23 @@ export default function ProductDetailPage() {
                </Badge>
                {!isOutOfStock && (
                  <Badge className="bg-green-100 text-green-700 border-green-200 font-bold uppercase tracking-widest text-[10px] py-1 px-3">
-                   <CheckCircle2 className="w-3 h-3 mr-1" /> Stock Disponible
+                   <CheckCircle2 className="w-3 h-3 mr-1" /> Disponible
                  </Badge>
                )}
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tighter leading-[0.9] drop-shadow-sm">
-              {product.name}
-            </h1>
-            <div className="flex items-center gap-6 pt-2">
-              <p className="text-6xl font-black text-primary tracking-tighter">${product.price}</p>
-            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tighter leading-[0.9]">{product.name}</h1>
+            <p className="text-6xl font-black text-primary tracking-tighter">${product.price}</p>
           </header>
 
           <section className="prose prose-neutral max-w-none border-t border-dashed pt-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-4">Descripción del Maestro Pastelero</h2>
-            <p className="text-foreground/80 text-xl leading-relaxed font-medium italic">
-              "{product.description}"
-            </p>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-4">Descripción</h2>
+            <p className="text-foreground/80 text-xl leading-relaxed font-medium italic">"{product.description}"</p>
           </section>
 
-          <div className="pt-8 space-y-6">
+          <div className="pt-8">
             <Button 
               size="lg" 
-              className="w-full py-10 text-2xl font-black rounded-[2rem] shadow-2xl transition-all hover:scale-[1.03] active:scale-95 shadow-primary/30 flex items-center justify-center gap-4"
+              className="w-full py-10 text-2xl font-black rounded-[2rem] shadow-2xl transition-all hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-4"
               disabled={isOutOfStock}
               onClick={handleAddToCart}
             >

@@ -5,12 +5,11 @@ import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 /**
- * @fileoverview Redirección de seguridad.
- * Esta ruta dinámica [productId] causaba conflicto con [slug].
- * Ahora redirige cualquier hit a la ruta maestra unificada.
+ * @fileoverview Redirección de Legado.
+ * Esta página ya no se usa para evitar conflictos con [slug].
+ * Redirige automáticamente a la nueva estructura de URL.
  */
-
-export default function ProductIdRedirect() {
+export default function LegacyProductRedirect() {
   const params = useParams();
   const router = useRouter();
 
@@ -20,9 +19,5 @@ export default function ProductIdRedirect() {
     }
   }, [params, router]);
 
-  return (
-    <div className="flex justify-center items-center min-h-[60vh]">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-  );
+  return null;
 }
