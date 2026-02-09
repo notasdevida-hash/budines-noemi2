@@ -1,11 +1,8 @@
 
-"use client";
-
 /**
- * ARCHIVO DESACTIVADO
- * Se ha neutralizado este archivo para eliminar el conflicto de rutas
- * que impedía el acceso a los productos por ID.
+ * ARCHIVO DESACTIVADO PARA EVITAR CONFLICTOS DE RUTA
+ * Se ha revertido el sistema a navegación por ID para restaurar la estabilidad.
  */
-export default function DisabledSlugRoute() {
+export default function DisabledSlugPage() {
   return null;
 }

@@ -136,7 +136,7 @@ export default function ProductDetailPage() {
             },
             "offers": {
               "@type": "Offer",
-              "url": `${process.env.NEXT_PUBLIC_SITE_URL}/products/${product.id}`,
+              "url": `https://budinesnoemi.com/products/${product.id}`,
               "priceCurrency": "ARS",
               "price": product.price,
               "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
