@@ -13,7 +13,6 @@ import { ShoppingCart } from 'lucide-react';
 type Product = {
   id: string;
   name: string;
-  slug?: string;
   price: number;
   imageUrl: string;
   description: string;
@@ -43,7 +42,8 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
-  const productUrl = `/products/${product.slug || product.id}`;
+  // Revertido a usar el ID directo
+  const productUrl = `/products/${product.id}`;
 
   return (
     <Card 
