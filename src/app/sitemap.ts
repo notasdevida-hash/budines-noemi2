@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  // Rutas dinámicas de productos desde Firestore usando IDs
+  // Rutas dinámicas de productos desde Firestore usando IDs para evitar conflictos
   try {
     const { adminDb } = getAdminServices();
     const productsSnap = await adminDb.collection('products').where('active', '==', true).get();

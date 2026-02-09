@@ -42,6 +42,7 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
+  // Navegación directa por ID de Firestore
   const productUrl = `/products/${product.id}`;
 
   return (
