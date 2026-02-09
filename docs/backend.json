@@ -9,13 +9,14 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "slug": { "type": "string", "description": "URL-friendly version of the name" },
         "price": { "type": "number" },
         "imageUrl": { "type": "string", "format": "uri" },
         "description": { "type": "string" },
         "active": { "type": "boolean" },
         "stock": { "type": "number" }
       },
-      "required": ["id", "name", "price", "imageUrl", "description", "active", "stock"]
+      "required": ["id", "name", "slug", "price", "imageUrl", "description", "active", "stock"]
     },
     "Order": {
       "$schema": "http://json-schema.org/draft-07/schema#",

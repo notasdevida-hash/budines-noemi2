@@ -13,6 +13,7 @@ import { ShoppingCart, Plus, Star } from 'lucide-react';
 type Product = {
   id: string;
   name: string;
+  slug?: string;
   price: number;
   imageUrl: string;
   description: string;
@@ -40,9 +41,11 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
+  const productUrl = `/products/${product.slug || product.id}`;
+
   return (
     <Card className="group overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-500 bg-card flex flex-col h-full rounded-[2rem]">
-      <Link href={`/products/${product.id}`} className="flex-grow cursor-pointer block">
+      <Link href={productUrl} className="flex-grow cursor-pointer block">
         <div className="relative aspect-[4/5] overflow-hidden">
           <Image
             src={product.imageUrl}

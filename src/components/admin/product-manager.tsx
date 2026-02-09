@@ -16,6 +16,16 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
+const generateSlug = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+};
+
 export function ProductManager() {
   const db = useFirestore();
   const { toast } = useToast();
@@ -79,10 +89,12 @@ export function ProductManager() {
     const formData = new FormData(e.currentTarget);
     const colRef = collection(db, 'products');
     const newDocRef = doc(colRef);
+    const name = formData.get('name') as string;
 
     const newProduct = {
       id: newDocRef.id,
-      name: formData.get('name') as string,
+      name: name,
+      slug: generateSlug(name),
       price: Number(formData.get('price')),
       stock: Number(formData.get('stock')),
       imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
@@ -103,9 +115,11 @@ export function ProductManager() {
     
     const formData = new FormData(e.currentTarget);
     const docRef = doc(db, 'products', editingProduct.id);
+    const name = formData.get('name') as string;
 
     const updatedData = {
-      name: formData.get('name') as string,
+      name: name,
+      slug: generateSlug(name),
       price: Number(formData.get('price')),
       stock: Number(formData.get('stock')),
       imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
