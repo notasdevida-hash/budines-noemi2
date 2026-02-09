@@ -1,20 +1,11 @@
 
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
 /**
- * @fileoverview ARCHIVO DESACTIVADO
- * Se mantiene vacío para evitar conflictos con la ruta principal [productId].
- * Redirecciona al inicio si alguien intenta acceder por una URL de slug antigua.
+ * ARCHIVO DESACTIVADO
+ * Se ha neutralizado este archivo para eliminar el conflicto de rutas
+ * que impedía el acceso a los productos por ID.
  */
-export default function SlugCleanup() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/');
-  }, [router]);
-
+export default function DisabledSlugRoute() {
   return null;
 }
