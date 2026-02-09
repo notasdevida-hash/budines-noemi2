@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle, Utensils } from 'lucide-react';
+import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Image from 'next/image';
@@ -29,7 +29,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section - Optimizada con palabras clave H1 */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1578985543813-689480955d88?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]"></div>
@@ -51,14 +50,13 @@ export default function Home() {
                 <Link href="#productos">Ver Menú de Budines</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="w-full sm:w-auto px-10 py-7 text-lg font-bold rounded-full bg-white/10 text-white border-white/20 hover:bg-white/20 transition-all backdrop-blur-md">
-                <Link href="#nosotros">Nuestra Historia en Buenos Aires</Link>
+                <Link href="#nosotros">Nuestra Historia</Link>
               </Button>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
@@ -84,7 +82,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Products Grid */}
       <section id="productos" className="py-20 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col items-center mb-12 text-center">
@@ -119,7 +116,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* About Us Section */}
       <section id="nosotros" className="py-24 bg-white overflow-hidden">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -129,7 +125,7 @@ export default function Home() {
             >
               <Image 
                 src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000&auto=format&fit=crop" 
-                alt="Noemi Garcia - Elaboración de budines caseros en Buenos Aires" 
+                alt="Noemi Garcia - Elaboración de budines caseros" 
                 fill 
                 className="object-cover"
                 data-ai-hint="baker kitchen"
@@ -148,10 +144,10 @@ export default function Home() {
               
               <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
                 <p>
-                  Todo comenzó en mi cocina de Buenos Aires, donde el aroma a vainilla y limón inundaba cada rincón los domingos por la tarde. Lo que empezó como un hobby para la familia se convirtió en **Budines Noemi**.
+                  Todo comenzó en mi cocina de Buenos Aires, donde el aroma a vainilla y limón inundaba cada rincón. Lo que empezó como un hobby familiar se convirtió en **Budines Noemi**.
                 </p>
                 <p>
-                  Hoy, mis budines son el resultado de años de perfeccionar recetas tradicionales. No uso conservantes ni químicos; cada producto es una pieza única de repostería artesanal argentina.
+                  Hoy, mis budines son el resultado de años de perfeccionar recetas tradicionales. No uso conservantes; cada producto es repostería artesanal argentina pura.
                 </p>
               </div>
 
@@ -170,15 +166,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-6">
-          <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 px-4">Testimonios de amantes del budín</h2>
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 px-4">Lo que dicen nuestros clientes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: "Lucía M. (Palermo)", text: "El budín de limón es increíble, tiene el equilibrio justo de humedad. ¡El mejor de todo Buenos Aires!" },
-              { name: "Carlos R. (San Isidro)", text: "Se nota la calidad de los ingredientes caseros. El de chocolate belga es de otro planeta." },
-              { name: "Marta S. (Belgrano)", text: "Excelente atención y los budines llegan tibios. Un mimo para el alma artesanal." }
+              { name: "Lucía M. (Palermo)", text: "El budín de limón es increíble, tiene el equilibrio justo de humedad. ¡El mejor de CABA!" },
+              { name: "Carlos R. (San Isidro)", text: "Se nota la calidad de los ingredientes. El de chocolate es de otro planeta." },
+              { name: "Marta S. (Belgrano)", text: "Excelente atención y los budines llegan perfectos. Un mimo para el alma." }
             ].map((t, i) => (
               <motion.div 
                 key={i} 
@@ -197,28 +192,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 bg-secondary/10">
-        <div className="container mx-auto px-6 max-w-3xl">
-          <h2 className="text-2xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter px-4">Preguntas Frecuentes sobre envíos</h2>
-          <Accordion type="single" collapsible className="w-full space-y-4">
-            <AccordionItem value="item-2" className="bg-white px-6 rounded-2xl border-none shadow-sm">
-              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿A qué zonas de Buenos Aires envían?</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground pb-6">
-                Realizamos envíos en toda la Capital Federal (CABA) y zona norte de GBA. Si comprás antes de las 11:00 AM, el envío llega el mismo día.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3" className="bg-white px-6 rounded-2xl border-none shadow-sm">
-              <AccordionTrigger className="text-md font-bold hover:no-underline py-6">¿Cómo conservar los budines caseros?</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground pb-6">
-                Al ser 100% naturales, se mantienen frescos por 3-4 días a temperatura ambiente en su empaque original, o hasta 7 días en heladera.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
-
-      {/* CTA Section */}
       <section className="py-24 bg-primary relative overflow-hidden">
         <div className="container mx-auto px-6 relative z-10 text-center text-primary-foreground space-y-8">
           <motion.h2 className="text-4xl md:text-7xl font-black tracking-tight px-4" {...fadeIn}>
@@ -226,7 +199,7 @@ export default function Home() {
           </motion.h2>
           <motion.div {...fadeIn} className="pt-8 flex flex-col sm:flex-row justify-center gap-4 px-6">
             <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto px-12 py-8 text-xl font-black rounded-full shadow-2xl hover:scale-105 transition-transform">
-              <Link href="#productos">COMPRAR BUDINES AHORA</Link>
+              <Link href="#productos">COMPRAR AHORA</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto px-10 py-8 text-lg font-bold rounded-full bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all">
               <Link href="https://wa.me/5491112345678" target="_blank">

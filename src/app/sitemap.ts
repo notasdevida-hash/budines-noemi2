@@ -13,19 +13,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  // Rutas dinámicas de productos desde Firestore usando IDs (revertido)
+  // Rutas dinámicas de productos desde Firestore usando IDs
   try {
     const { adminDb } = getAdminServices();
     const productsSnap = await adminDb.collection('products').where('active', '==', true).get();
     
-    const productRoutes = productsSnap.docs.map((doc) => {
-      return {
-        url: `${siteUrl}/products/${doc.id}`,
-        lastModified: new Date(),
-        changeFrequency: 'daily' as const,
-        priority: 0.9,
-      };
-    });
+    const productRoutes = productsSnap.docs.map((doc) => ({
+      url: `${siteUrl}/products/${doc.id}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    }));
 
     return [...routes, ...productRoutes];
   } catch (error) {

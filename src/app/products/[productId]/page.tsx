@@ -121,6 +121,29 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.name,
+            "image": product.imageUrl,
+            "description": product.description,
+            "brand": {
+              "@type": "Brand",
+              "name": "Budines Noemi"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": `${process.env.NEXT_PUBLIC_SITE_URL}/products/${product.id}`,
+              "priceCurrency": "ARS",
+              "price": product.price,
+              "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+            }
+          })
+        }}
+      />
     </div>
   );
 }
