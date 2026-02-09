@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { ShoppingCart, Plus, Star } from 'lucide-react';
+import { ShoppingCart, Star } from 'lucide-react';
 
 type Product = {
   id: string;
@@ -27,6 +27,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); 
+    e.stopPropagation();
     if (isOutOfStock) return;
     
     addItem({
@@ -41,11 +42,12 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
+  // Priorizamos el slug para la URL, pero usamos el ID si no existe
   const productUrl = `/products/${product.slug || product.id}`;
 
   return (
     <Card className="group overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-500 bg-card flex flex-col h-full rounded-[2rem]">
-      <Link href={productUrl} className="flex-grow cursor-pointer block">
+      <Link href={productUrl} className="flex-grow flex flex-col">
         <div className="relative aspect-[4/5] overflow-hidden">
           <Image
             src={product.imageUrl}
@@ -78,7 +80,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
         
-        <CardContent className="p-8 pb-4">
+        <CardContent className="p-8 pb-4 flex-grow">
           <div className="space-y-3">
             <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors leading-tight">
               {product.name}
@@ -94,7 +96,7 @@ export function ProductCard({ product }: { product: Product }) {
         </CardContent>
       </Link>
       
-      <CardFooter className="p-8 pt-4 mt-auto">
+      <CardFooter className="p-8 pt-4">
         <Button 
           onClick={handleAddToCart}
           className="w-full py-8 text-lg font-black rounded-2xl shadow-xl transition-all hover:scale-[1.03] group/btn"

@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit, doc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -10,30 +10,42 @@ import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from 'react';
 
 /**
- * @fileoverview Página de detalles de un producto específico, cargado por su slug SEO.
+ * @fileoverview Página de detalles de producto robusta.
+ * Soporta navegación por ID (compatibilidad) y por Slug (SEO).
  */
 
 export default function ProductDetailPage() {
-  const { slug } = useParams();
+  const { slug: identifier } = useParams();
   const db = useFirestore();
   const router = useRouter();
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  // Buscamos el producto por su campo 'slug'
-  const productQuery = useMemoFirebase(() => {
-    if (!db || !slug) return null;
-    return query(collection(db, 'products'), where('slug', '==', slug as string), limit(1));
-  }, [db, slug]);
+  // 1. Intentamos obtener por ID primero (es lo más rápido)
+  const docRef = useMemoFirebase(() => {
+    if (!db || !identifier) return null;
+    return doc(db, 'products', identifier as string);
+  }, [db, identifier]);
 
-  const { data: products, isLoading } = useCollection(productQuery);
-  const product = products?.[0];
+  const { data: productById, isLoading: isLoadingId } = useDoc(docRef);
+
+  // 2. Si no hay resultado por ID, buscamos por Slug
+  const slugQuery = useMemoFirebase(() => {
+    if (!db || !identifier || productById) return null;
+    return query(collection(db, 'products'), where('slug', '==', identifier as string), limit(1));
+  }, [db, identifier, productById]);
+
+  const { data: productsBySlug, isLoading: isLoadingSlug } = useCollection(slugQuery);
+  
+  const product = productById || productsBySlug?.[0];
+  const isLoading = isLoadingId || (isLoadingSlug && !productById);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
+      <div className="flex justify-center items-center min-h-[80vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -41,9 +53,9 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="container mx-auto px-4 py-24 text-center">
+      <div className="container mx-auto px-4 py-24 text-center mt-20">
         <h2 className="text-2xl font-bold mb-4">Producto no encontrado</h2>
-        <p className="mb-8 text-muted-foreground">Si acabas de cambiar la URL, intenta guardar el producto nuevamente en el panel admin.</p>
+        <p className="mb-8 text-muted-foreground">No pudimos encontrar el budín que buscas.</p>
         <Button onClick={() => router.push('/')}>Volver a la tienda</Button>
       </div>
     );
@@ -66,7 +78,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 mt-16">
+    <div className="container mx-auto px-4 py-12 mt-20 md:mt-28">
       {/* Schema.org para Google Rich Results */}
       <script
         type="application/ld+json"
@@ -94,63 +106,73 @@ export default function ProductDetailPage() {
         }}
       />
 
-      <Button variant="ghost" onClick={() => router.back()} className="mb-8 hover:bg-secondary">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Volver a la tienda
+      <Button variant="ghost" onClick={() => router.push('/#productos')} className="mb-8 hover:bg-secondary">
+        <ArrowLeft className="mr-2 h-4 w-4" /> Volver al menú
       </Button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start max-w-6xl mx-auto">
         {/* Imagen del Producto */}
-        <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl bg-muted border border-border">
+        <div className="relative aspect-square rounded-[3rem] overflow-hidden shadow-2xl bg-muted border border-border group">
           <Image
             src={product.imageUrl}
             alt={`${product.name} artesanal - Budines Noemi`}
             fill
-            className={`object-cover transition-opacity duration-500 ${isOutOfStock ? 'grayscale opacity-60' : 'opacity-100'}`}
+            className={`object-cover transition-transform duration-700 group-hover:scale-105 ${isOutOfStock ? 'grayscale opacity-60' : 'opacity-100'}`}
             priority
           />
           {isOutOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <Badge variant="destructive" className="text-2xl py-2 px-6">SIN STOCK</Badge>
+              <Badge variant="destructive" className="text-2xl py-2 px-6 rounded-full font-black uppercase">SIN STOCK</Badge>
             </div>
           )}
         </div>
 
         {/* Información del Producto */}
-        <div className="space-y-8">
-          <header>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">{product.name}</h1>
-            <div className="flex items-center gap-4">
-              <p className="text-4xl font-bold text-primary">${product.price}</p>
+        <div className="space-y-8 py-4">
+          <header className="space-y-4">
+            <div className="flex gap-2">
+               <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-widest text-[10px]">100% Artesanal</Badge>
+               {product.active && <Badge className="bg-green-100 text-green-700 border-green-200 font-bold uppercase tracking-widest text-[10px]">Disponible Hoy</Badge>}
+            </div>
+            <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter leading-none">{product.name}</h1>
+            <div className="flex items-center gap-6">
+              <p className="text-5xl font-black text-primary tracking-tighter">${product.price}</p>
               {product.stock !== undefined && (
-                <Badge variant={isOutOfStock ? "destructive" : "secondary"} className="text-sm py-1 px-3">
-                  {isOutOfStock ? "Agotado" : `Stock disponible: ${product.stock}`}
-                </Badge>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Disponibilidad</span>
+                  <span className={`font-bold text-sm ${isOutOfStock ? 'text-destructive' : 'text-green-600'}`}>
+                    {isOutOfStock ? "Agotado temporalmente" : `${product.stock} unidades en stock`}
+                  </span>
+                </div>
               )}
             </div>
           </header>
 
-          <section className="prose prose-neutral max-w-none border-t pt-6">
-            <h2 className="text-xl font-bold mb-4">Descripción Artesanal de este {product.name}</h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+          <section className="prose prose-neutral max-w-none border-t pt-8">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground mb-4">Sobre esta delicia</h2>
+            <p className="text-foreground/80 text-lg leading-relaxed font-medium">
               {product.description}
             </p>
           </section>
 
-          <div className="pt-8 space-y-4">
+          <div className="pt-8 space-y-6">
             <Button 
               size="lg" 
-              className="w-full md:w-auto px-16 py-8 text-xl font-bold shadow-xl transition-transform hover:scale-105"
+              className="w-full py-10 text-2xl font-black rounded-3xl shadow-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-primary/20"
               disabled={isOutOfStock}
               onClick={handleAddToCart}
             >
-              <ShoppingCart className="mr-3 h-6 w-6" />
-              {isOutOfStock ? "Agotado" : "Agregar al carrito"}
+              <ShoppingCart className="mr-3 h-7 w-7" />
+              {isOutOfStock ? "PRODUCTO AGOTADO" : "AGREGAR AL CARRITO"}
             </Button>
             
-            <div className="p-4 bg-secondary/20 rounded-lg border border-primary/10">
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                Budín artesanal horneado en Buenos Aires con ingredientes premium.
+            <div className="p-6 bg-secondary/30 rounded-3xl border border-dashed border-primary/30 flex items-start gap-4">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <Image src="https://picsum.photos/seed/bakery/40/40" alt="bakery icon" width={24} height={24} className="opacity-70" />
+              </div>
+              <p className="text-sm text-muted-foreground font-medium leading-tight">
+                <strong className="text-primary block mb-1">Calidad Noemi Garantizada</strong>
+                Horneado en pequeñas tandas para asegurar la máxima frescura en tu mesa.
               </p>
             </div>
           </div>
