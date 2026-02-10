@@ -1,3 +1,4 @@
+
 "use client";
 
 import { ProductCard } from '@/components/product-card';
@@ -83,7 +84,7 @@ export default function Home() {
             </motion.div>
           </AnimatePresence>
           {/* Overlay constant to ensure text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80" />
         </motion.div>
         
         <div className="container relative z-10 px-6 text-center">
@@ -91,63 +92,63 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="max-w-4xl mx-auto space-y-8"
+            className="max-w-5xl mx-auto space-y-10"
           >
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full glass text-primary text-xs font-black uppercase tracking-[0.2em] mb-4">
-              <Sparkles className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full glass text-primary text-xs font-black uppercase tracking-[0.3em] mb-4 shadow-xl border border-white/20">
+              <Sparkles className="w-4 h-4 animate-pulse" />
               Recetas Familiares desde 2008
             </div>
             
-            <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter leading-tight drop-shadow-2xl">
-              Budines que <br />
-              <span className="text-primary italic font-serif">Aman</span>
+            <h1 className="text-7xl md:text-[10rem] font-black text-white tracking-tighter leading-[0.85] drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+              Creaciones que <br />
+              <span className="text-primary italic font-serif">Inspiran</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-white/90 font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-md">
+            <p className="text-xl md:text-3xl text-white/95 font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-lg">
               Descubrí la verdadera repostería artesanal. <br className="hidden md:block" />
               Sin conservantes, horneados hoy, entregados en tu puerta.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8">
-              <Button asChild size="lg" className="h-16 px-10 text-lg font-black rounded-full shadow-2xl hover:scale-105 transition-all group">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center pt-10">
+              <Button asChild size="lg" className="h-20 px-12 text-xl font-black rounded-full shadow-[0_20px_50px_rgba(166,144,121,0.4)] hover:scale-105 transition-all group">
                 <Link href="#productos">
-                  ORDENAR AHORA <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                  ORDENAR AHORA <ArrowRight className="ml-2 group-hover:translate-x-2 transition-transform" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-16 px-10 text-lg font-bold rounded-full glass text-foreground border-white/20 hover:bg-white/40 transition-all">
-                <Link href="#nosotros">CONOCÉ NUESTRA HISTORIA</Link>
+              <Button asChild variant="outline" size="lg" className="h-20 px-12 text-lg font-bold rounded-full glass text-white border-white/30 hover:bg-white/20 transition-all backdrop-blur-md">
+                <Link href="#nosotros">NUESTRA HISTORIA</Link>
               </Button>
             </div>
           </motion.div>
         </div>
         
         {/* Carousel Indicators */}
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-4 z-20">
           {HERO_IMAGES.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentImageIndex(i)}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                currentImageIndex === i ? "w-8 bg-primary" : "w-2 bg-white/30 hover:bg-white/50"
+              className={`h-2 rounded-full transition-all duration-700 ${
+                currentImageIndex === i ? "w-12 bg-primary shadow-[0_0_15px_rgba(166,144,121,0.8)]" : "w-2 bg-white/40 hover:bg-white/60"
               }`}
             />
           ))}
         </div>
 
         <motion.div 
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/60 flex flex-col items-center gap-2"
+          animate={{ y: [0, 15, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/60 flex flex-col items-center gap-3"
         >
-          <span className="text-[10px] uppercase tracking-widest font-bold">Deslizar</span>
-          <div className="w-px h-12 bg-gradient-to-b from-white/60 to-transparent"></div>
+          <span className="text-[10px] uppercase tracking-[0.4em] font-black">Explorar</span>
+          <div className="w-px h-16 bg-gradient-to-b from-white/60 to-transparent"></div>
         </motion.div>
       </section>
 
       {/* FEATURES - ELEGANT CARDS */}
-      <section className="py-24 bg-white">
+      <section className="py-32 bg-white">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             {[
               { icon: ChefHat, title: "Arte en la Cocina", desc: "Cada budín es una obra única hecha a mano, respetando los tiempos naturales de horneado." },
               { icon: Heart, title: "Sabor de Hogar", desc: "Ingredientes seleccionados de productores locales para garantizar frescura absoluta." },
@@ -155,17 +156,17 @@ export default function Home() {
             ].map((item, i) => (
               <motion.div 
                 key={i} 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }}
-                className="group p-10 rounded-[3rem] bg-secondary/50 hover:bg-white hover:shadow-2xl transition-all border border-transparent hover:border-primary/10"
+                className="group p-12 rounded-[4rem] bg-secondary/30 hover:bg-white hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] transition-all duration-500 border border-transparent hover:border-primary/5"
               >
-                <div className="w-16 h-16 bg-primary text-primary-foreground rounded-[1.5rem] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform mb-8">
-                  <item.icon className="w-8 h-8" />
+                <div className="w-20 h-20 bg-primary text-primary-foreground rounded-[2rem] flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all mb-10">
+                  <item.icon className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-black mb-4 tracking-tight text-foreground">{item.title}</h3>
-                <p className="text-muted-foreground leading-relaxed font-medium">{item.desc}</p>
+                <h3 className="text-3xl font-black mb-5 tracking-tight text-foreground">{item.title}</h3>
+                <p className="text-muted-foreground leading-relaxed font-medium text-lg">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -173,21 +174,21 @@ export default function Home() {
       </section>
 
       {/* PRODUCTS SECTION - GRID REFINED */}
-      <section id="productos" className="py-32 bg-background relative">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
-            <div className="space-y-4">
-              <span className="text-primary font-black tracking-[0.3em] uppercase text-xs">Colección de Temporada</span>
-              <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-foreground">Nuestras Delicias</h2>
+      <section id="productos" className="py-32 bg-background relative overflow-hidden">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-24 gap-10">
+            <div className="space-y-6">
+              <span className="text-primary font-black tracking-[0.5em] uppercase text-xs block">Colección de Temporada</span>
+              <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-foreground leading-none">Nuestras <br />Delicias</h2>
             </div>
-            <p className="max-w-xs text-muted-foreground font-medium leading-relaxed">
-              Explorá nuestra variedad de sabores artesanales. Desde los clásicos cítricos hasta las opciones más intensas.
+            <p className="max-w-sm text-muted-foreground font-medium text-xl leading-relaxed italic">
+              "Explorá nuestra variedad de sabores artesanales. Cada bocado cuenta una historia de paciencia y amor."
             </p>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-32">
-              <Loader2 className="h-16 w-16 animate-spin text-primary/20" />
+            <div className="flex justify-center py-40">
+              <Loader2 className="h-20 w-20 animate-spin text-primary/10" />
             </div>
           ) : (
             <motion.div 
@@ -195,7 +196,7 @@ export default function Home() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-14"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16"
             >
               {products?.map((product) => (
                 <motion.div key={product.id} variants={itemVariants}>
@@ -205,40 +206,47 @@ export default function Home() {
             </motion.div>
           )}
         </div>
+        
+        {/* Subtle decorative elements */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
       </section>
 
       {/* STORY SECTION - CINEMATIC */}
-      <section id="nosotros" className="py-32 bg-white overflow-hidden">
+      <section id="nosotros" className="py-40 bg-white overflow-hidden">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <motion.div 
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative aspect-[3/4] rounded-[4rem] overflow-hidden shadow-2xl group"
+              className="relative aspect-[3/4] rounded-[5rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] group border-[16px] border-secondary/20"
             >
               <Image 
                 src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000&auto=format&fit=crop" 
                 alt="Noemi Garcia Baker" 
                 fill 
-                className="object-cover group-hover:scale-105 transition-transform duration-1000"
+                className="object-cover group-hover:scale-105 transition-transform duration-[3000ms]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div className="absolute bottom-12 left-12 right-12">
-                <blockquote className="text-white text-3xl font-serif italic leading-tight mb-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-16 left-16 right-16">
+                <blockquote className="text-white text-4xl font-serif italic leading-tight mb-6 drop-shadow-lg">
                   "Un budín no es solo harina y azúcar; es el recuerdo de una merienda compartida."
                 </blockquote>
-                <p className="text-primary-foreground font-bold uppercase tracking-widest text-sm">- Noemi Garcia</p>
+                <div className="flex items-center gap-4">
+                  <div className="h-px w-12 bg-primary"></div>
+                  <p className="text-primary-foreground font-black uppercase tracking-[0.3em] text-xs">Noemi Garcia</p>
+                </div>
               </div>
             </motion.div>
             
-            <div className="space-y-10">
-              <div className="space-y-4">
-                <span className="text-primary font-black tracking-[0.3em] uppercase text-xs">Nuestra esencia</span>
-                <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9] text-foreground">Hecho con <br /><span className="text-primary italic font-serif">Paciencia.</span></h2>
+            <div className="space-y-12">
+              <div className="space-y-6">
+                <span className="text-primary font-black tracking-[0.4em] uppercase text-xs block">Nuestra esencia</span>
+                <h2 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.85] text-foreground">Hecho con <br /><span className="text-primary italic font-serif">Paciencia.</span></h2>
               </div>
               
-              <div className="space-y-6 text-muted-foreground text-xl leading-relaxed font-medium">
+              <div className="space-y-8 text-muted-foreground text-2xl leading-relaxed font-medium italic">
                 <p>
                   En 2008, decidí que el aroma de mi cocina debía salir a la calle. Comencé horneando para amigos, pero pronto la pasión se convirtió en una búsqueda incansable del sabor perfecto.
                 </p>
@@ -247,14 +255,14 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-10 pt-6">
-                <div className="border-l-4 border-primary/20 pl-6 space-y-2">
-                  <h4 className="text-5xl font-black text-primary tracking-tighter">15</h4>
-                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Años de Tradición</p>
+              <div className="grid grid-cols-2 gap-12 pt-8">
+                <div className="border-l-[6px] border-primary/20 pl-8 space-y-3">
+                  <h4 className="text-6xl font-black text-primary tracking-tighter">15</h4>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Años de Tradición</p>
                 </div>
-                <div className="border-l-4 border-primary/20 pl-6 space-y-2">
-                  <h4 className="text-5xl font-black text-primary tracking-tighter">100%</h4>
-                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Artesanal</p>
+                <div className="border-l-[6px] border-primary/20 pl-8 space-y-3">
+                  <h4 className="text-6xl font-black text-primary tracking-tighter">100%</h4>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Artesanal</p>
                 </div>
               </div>
             </div>
@@ -263,36 +271,48 @@ export default function Home() {
       </section>
 
       {/* CTA - IMPACTFUL */}
-      <section className="py-40 relative bg-primary overflow-hidden">
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+      <section className="py-48 relative bg-primary overflow-hidden">
+        <div className="absolute inset-0 opacity-30 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_white_0%,_transparent_70%)]"></div>
         </div>
-        <div className="container relative z-10 mx-auto px-6 text-center text-primary-foreground space-y-12">
+        <div className="container relative z-10 mx-auto px-6 text-center text-primary-foreground space-y-16">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="space-y-6"
+            className="space-y-8"
           >
-            <h2 className="text-6xl md:text-8xl font-black tracking-tighter leading-none">
+            <h2 className="text-7xl md:text-[10rem] font-black tracking-tighter leading-none drop-shadow-2xl">
               ¿Listo para el <br /> primer bocado?
             </h2>
-            <p className="text-xl md:text-2xl text-primary-foreground/80 max-w-2xl mx-auto font-medium">
-              Sumate a nuestra comunidad de amantes de lo dulce. Hacé tu pedido hoy y coordinator la entrega para cuando prefieras.
+            <p className="text-2xl md:text-4xl text-primary-foreground/90 max-w-3xl mx-auto font-medium leading-relaxed">
+              Sumate a nuestra comunidad de amantes de lo dulce. Hacé tu pedido hoy y coordinemos la entrega.
             </p>
           </motion.div>
           
-          <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <Button asChild size="lg" variant="secondary" className="h-20 px-16 text-2xl font-black rounded-full shadow-2xl hover:scale-105 transition-all">
+          <div className="flex flex-col sm:flex-row justify-center gap-8">
+            <Button asChild size="lg" variant="secondary" className="h-24 px-20 text-3xl font-black rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.3)] hover:scale-105 transition-all">
               <Link href="#productos">QUIERO MI BUDÍN</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-20 px-10 text-lg font-bold rounded-full glass text-foreground border-white/20 hover:bg-white/20 transition-all">
+            <Button asChild variant="outline" size="lg" className="h-24 px-12 text-xl font-bold rounded-full glass text-white border-white/40 hover:bg-white/20 transition-all backdrop-blur-xl">
               <Link href="https://wa.me/5491112345678" target="_blank">
-                <MessageCircle className="mr-2 w-6 h-6" /> CONSULTAR WHATSAPP
+                <MessageCircle className="mr-3 w-8 h-8" /> CONSULTAR WHATSAPP
               </Link>
             </Button>
           </div>
         </div>
+        
+        {/* Animated background shapes */}
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute -top-40 -left-40 w-96 h-96 bg-white/10 rounded-[4rem] blur-3xl"
+        />
+        <motion.div 
+          animate={{ scale: [1.2, 1, 1.2], rotate: [0, -90, 0] }}
+          transition={{ duration: 25, repeat: Infinity }}
+          className="absolute -bottom-40 -right-40 w-96 h-96 bg-white/10 rounded-[4rem] blur-3xl"
+        />
       </section>
     </div>
   );
