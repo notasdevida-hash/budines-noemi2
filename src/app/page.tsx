@@ -6,9 +6,17 @@ import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle, ArrowRight, Sparkles } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+
+const HERO_IMAGES = [
+  "https://res.cloudinary.com/dm2g8wqvx/image/upload/v1770704844/2_qauruh.png",
+  "https://res.cloudinary.com/dm2g8wqvx/image/upload/v1770704848/Captura_de_pantalla_2026-02-10_032403_rpnztt.png",
+  "https://res.cloudinary.com/dm2g8wqvx/image/upload/v1770704847/3_qlhjpj.png",
+  "https://res.cloudinary.com/dm2g8wqvx/image/upload/v1770704848/4_r26mqg.png",
+  "https://res.cloudinary.com/dm2g8wqvx/image/upload/v1770704846/5_qo6kk5.png"
+];
 
 export default function Home() {
   const db = useFirestore();
@@ -17,6 +25,15 @@ export default function Home() {
     target: targetRef,
     offset: ["start start", "end start"]
   });
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000); // Cambia cada 5 segundos
+    return () => clearInterval(timer);
+  }, []);
 
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
@@ -44,17 +61,28 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      {/* HERO SECTION - REIMAGINED WITH BETTER CONTRAST */}
-      <section ref={targetRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-secondary">
+      {/* HERO SECTION - REIMAGINED WITH AUTOMATIC CAROUSEL */}
+      <section ref={targetRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
         <motion.div style={{ opacity, scale }} className="absolute inset-0 z-0">
-          <Image 
-            src="https://images.unsplash.com/photo-1578985543813-689480955d88?q=80&w=2000&auto=format&fit=crop" 
-            alt="Budines Artesanales Background"
-            fill
-            className="object-cover brightness-[0.35]"
-            priority
-          />
-          {/* Overlay to ensure text readability */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={HERO_IMAGES[currentImageIndex]}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0"
+            >
+              <Image 
+                src={HERO_IMAGES[currentImageIndex]} 
+                alt={`Budines Artesanales Slide ${currentImageIndex + 1}`}
+                fill
+                className="object-cover brightness-[0.5]"
+                priority
+              />
+            </motion.div>
+          </AnimatePresence>
+          {/* Overlay constant to ensure text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60" />
         </motion.div>
         
@@ -70,7 +98,7 @@ export default function Home() {
               Recetas Familiares desde 2008
             </div>
             
-            <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter leading-tight drop-shadow-xl">
+            <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter leading-tight drop-shadow-2xl">
               Budines que <br />
               <span className="text-primary italic font-serif">Aman</span>
             </h1>
@@ -93,6 +121,19 @@ export default function Home() {
           </motion.div>
         </div>
         
+        {/* Carousel Indicators */}
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+          {HERO_IMAGES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentImageIndex(i)}
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                currentImageIndex === i ? "w-8 bg-primary" : "w-2 bg-white/30 hover:bg-white/50"
+              }`}
+            />
+          ))}
+        </div>
+
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
