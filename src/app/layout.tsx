@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/navbar';
@@ -6,6 +5,7 @@ import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/components/cart-provider';
 import { FirebaseClientProvider } from '@/firebase';
+import { FloatingInstagram } from '@/components/floating-instagram';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://budinesnoemi.com';
 
@@ -92,6 +92,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <FloatingInstagram />
           </CartProvider>
         </FirebaseClientProvider>
         <Toaster />
