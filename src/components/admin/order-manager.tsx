@@ -12,6 +12,7 @@ import { Loader2, Eye, Calendar, User, Phone, Mail, ShoppingBag, MessageCircle }
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function OrderManager() {
   const db = useFirestore();
@@ -33,7 +34,6 @@ export function OrderManager() {
       `¡Espero que disfrutes tus budines! ✨`
     );
     
-    // Limpiar el teléfono para que solo tenga números
     const cleanPhone = order.customerPhone.replace(/\D/g, '');
     const finalPhone = cleanPhone.startsWith('54') ? cleanPhone : `549${cleanPhone}`;
     
@@ -41,126 +41,130 @@ export function OrderManager() {
   };
 
   return (
-    <Card className="shadow-lg border-none">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Gestión de Pedidos</CardTitle>
+    <Card className="shadow-xl border-none overflow-hidden rounded-[2rem]">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl font-black uppercase tracking-tight text-primary">Gestión de Pedidos</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {isLoading ? (
           <div className="flex justify-center p-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <Loader2 className="h-12 w-12 animate-spin text-primary/30" />
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead>Fecha</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acción</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders?.map((order) => (
-                <TableRow key={order.id} className="hover:bg-muted/10 transition-colors">
-                  <TableCell className="font-medium text-xs">
-                    {order.createdAt ? format(new Date(order.createdAt), 'dd MMM, HH:mm', { locale: es }) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm">{order.customerName}</span>
-                      <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-bold text-primary">${order.total}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        order.status === 'paid' ? 'default' : 
-                        order.status === 'pending' ? 'secondary' : 'destructive'
-                      }
-                      className="px-2 py-0.5 text-[10px] uppercase font-black"
-                    >
-                      {order.status === 'paid' ? 'Pagado' : 
-                       order.status === 'pending' ? 'Pendiente' : 'Fallido'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    {order.status === 'paid' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => sendWhatsAppReceipt(order)}
-                        className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hidden md:inline-flex"
+          <div className="w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="whitespace-nowrap px-6">Fecha</TableHead>
+                  <TableHead className="whitespace-nowrap">Cliente</TableHead>
+                  <TableHead className="whitespace-nowrap">Total</TableHead>
+                  <TableHead className="whitespace-nowrap">Estado</TableHead>
+                  <TableHead className="text-right px-6">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders?.map((order) => (
+                  <TableRow key={order.id} className="hover:bg-primary/5 transition-colors">
+                    <TableCell className="px-6 font-bold text-[10px] uppercase text-muted-foreground whitespace-nowrap">
+                      {order.createdAt ? format(new Date(order.createdAt), 'dd MMM, HH:mm', { locale: es }) : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col min-w-[150px]">
+                        <span className="font-black text-sm uppercase tracking-tight">{order.customerName}</span>
+                        <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-black text-primary text-lg">${order.total}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={
+                          order.status === 'paid' ? 'default' : 
+                          order.status === 'pending' ? 'secondary' : 'destructive'
+                        }
+                        className="px-3 py-1 text-[9px] uppercase font-black tracking-widest rounded-full"
                       >
-                        <MessageCircle className="h-3.5 w-3.5 mr-1" /> WhatsApp
-                      </Button>
-                    )}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary">
-                          <Eye className="h-4 w-4" />
+                        {order.status === 'paid' ? 'Pagado' : 
+                         order.status === 'pending' ? 'Pendiente' : 'Fallido'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right px-6 space-x-2 whitespace-nowrap">
+                      {order.status === 'paid' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => sendWhatsAppReceipt(order)}
+                          className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 rounded-full h-10 w-10 p-0 md:w-auto md:px-4"
+                        >
+                          <MessageCircle className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">WhatsApp</span>
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle className="text-2xl flex items-center gap-2">
-                            <ShoppingBag className="text-primary" /> Detalle de la Orden
-                          </DialogTitle>
-                        </DialogHeader>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-6">
-                          <div className="space-y-4">
-                            <div className="bg-secondary/20 p-4 rounded-xl space-y-3">
-                              <h4 className="font-bold text-sm uppercase text-muted-foreground tracking-wider">Cliente</h4>
-                              <div className="space-y-2">
-                                <p className="flex items-center gap-2 text-sm"><User className="h-4 w-4 text-primary" /> {order.customerName}</p>
-                                <p className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-primary" /> {order.customerPhone}</p>
-                                {order.customerEmail && <p className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-primary" /> {order.customerEmail}</p>}
-                                <p className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-primary" /> {order.createdAt ? format(new Date(order.createdAt), 'PPPP', { locale: es }) : '-'}</p>
+                      )}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl w-[95vw] md:w-full rounded-[2rem] p-0 overflow-hidden">
+                          <DialogHeader className="p-8 pb-0">
+                            <DialogTitle className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
+                              <ShoppingBag className="text-primary h-8 w-8" /> Detalle del Pedido
+                            </DialogTitle>
+                          </DialogHeader>
+                          <ScrollArea className="max-h-[80vh]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-6">
+                              <div className="space-y-6">
+                                <div className="bg-secondary/30 p-6 rounded-[2rem] space-y-4 border border-primary/5">
+                                  <h4 className="font-black text-[10px] uppercase text-primary tracking-[0.2em]">Información del Cliente</h4>
+                                  <div className="space-y-3">
+                                    <p className="flex items-center gap-3 text-sm font-bold"><User className="h-4 w-4 text-primary" /> {order.customerName}</p>
+                                    <p className="flex items-center gap-3 text-sm font-bold"><Phone className="h-4 w-4 text-primary" /> {order.customerPhone}</p>
+                                    {order.customerEmail && <p className="flex items-center gap-3 text-sm font-bold"><Mail className="h-4 w-4 text-primary" /> {order.customerEmail}</p>}
+                                    <p className="flex items-center gap-3 text-sm text-muted-foreground font-medium"><Calendar className="h-4 w-4" /> {order.createdAt ? format(new Date(order.createdAt), 'PPPP', { locale: es }) : '-'}</p>
+                                  </div>
+                                </div>
+                                <Button 
+                                  onClick={() => sendWhatsAppReceipt(order)}
+                                  className="w-full py-8 text-lg font-black rounded-2xl bg-[#25D366] hover:bg-[#128C7E] shadow-xl transition-all hover:scale-[1.02]"
+                                >
+                                  <MessageCircle className="mr-3 h-6 w-6" /> ENVIAR RECIBO
+                                </Button>
+                              </div>
+                              <div className="space-y-6">
+                                <h4 className="font-black text-[10px] uppercase text-primary tracking-[0.2em]">Resumen de Productos</h4>
+                                <div className="space-y-3 pr-2">
+                                  {order.items?.map((item: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between items-center p-4 bg-background border rounded-2xl shadow-sm">
+                                      <div className="space-y-1">
+                                        <p className="font-black text-sm uppercase leading-none">{item.name}</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground">{item.quantity} x ${item.price}</p>
+                                      </div>
+                                      <p className="font-black text-primary">${item.price * item.quantity}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                                <Separator className="bg-primary/10" />
+                                <div className="flex justify-between items-center pt-2">
+                                  <span className="text-lg font-black uppercase tracking-tighter text-muted-foreground">TOTAL</span>
+                                  <span className="text-3xl font-black text-primary tracking-tighter">${order.total}</span>
+                                </div>
                               </div>
                             </div>
-                            <Button 
-                              onClick={() => sendWhatsAppReceipt(order)}
-                              className="w-full bg-[#25D366] hover:bg-[#128C7E] font-bold"
-                            >
-                              <MessageCircle className="mr-2 h-4 w-4" /> Enviar por WhatsApp
-                            </Button>
-                          </div>
-                          <div className="space-y-4">
-                            <h4 className="font-bold text-sm uppercase text-muted-foreground tracking-wider">Productos</h4>
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                              {order.items?.map((item: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                                  <div>
-                                    <p className="font-bold text-sm">{item.name}</p>
-                                    <p className="text-xs text-muted-foreground">{item.quantity} x ${item.price}</p>
-                                  </div>
-                                  <p className="font-bold text-primary">${item.price * item.quantity}</p>
-                                </div>
-                              ))}
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center pt-2">
-                              <span className="text-lg font-bold">TOTAL</span>
-                              <span className="text-2xl font-black text-primary">${order.total}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!orders?.length && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                    Aún no hay pedidos realizados.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!orders?.length && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-bold italic">
+                      No se han registrado pedidos todavía.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

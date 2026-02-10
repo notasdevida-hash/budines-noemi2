@@ -27,39 +27,41 @@ export default function AdminDashboard() {
   if (!user) return null;
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-8 md:py-12 mt-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Panel de Gestión</h1>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase text-primary">Panel de Gestión</h1>
           <p className="text-muted-foreground mt-2 font-medium">Bienvenida, {user.email}</p>
         </div>
-        <Button variant="outline" onClick={() => signOut(auth)} className="shadow-sm">
+        <Button variant="outline" onClick={() => signOut(auth)} className="shadow-sm rounded-xl border-2 font-bold w-full md:w-auto">
           <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
         </Button>
       </div>
 
       <Tabs defaultValue="resumen" className="space-y-8">
-        <TabsList className="bg-muted/50 p-1 rounded-xl">
-          <TabsTrigger value="resumen" className="rounded-lg">
-            <LayoutDashboard className="mr-2 h-4 w-4" /> Resumen
-          </TabsTrigger>
-          <TabsTrigger value="pedidos" className="rounded-lg">
-            <ShoppingBag className="mr-2 h-4 w-4" /> Pedidos
-          </TabsTrigger>
-          <TabsTrigger value="productos" className="rounded-lg">
-            <Package className="mr-2 h-4 w-4" /> Productos
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+          <TabsList className="bg-muted/50 p-1 rounded-xl w-full md:w-auto inline-flex whitespace-nowrap">
+            <TabsTrigger value="resumen" className="rounded-lg px-6 font-bold">
+              <LayoutDashboard className="mr-2 h-4 w-4" /> Resumen
+            </TabsTrigger>
+            <TabsTrigger value="pedidos" className="rounded-lg px-6 font-bold">
+              <ShoppingBag className="mr-2 h-4 w-4" /> Pedidos
+            </TabsTrigger>
+            <TabsTrigger value="productos" className="rounded-lg px-6 font-bold">
+              <Package className="mr-2 h-4 w-4" /> Productos
+            </TabsTrigger>
+          </TabsList>
+        </div>
         
-        <TabsContent value="resumen">
+        <TabsContent value="resumen" className="focus-visible:ring-0">
           <StatsOverview />
         </TabsContent>
         
-        <TabsContent value="pedidos">
+        <TabsContent value="pedidos" className="focus-visible:ring-0">
           <OrderManager />
         </TabsContent>
         
-        <TabsContent value="productos">
+        <TabsContent value="productos" className="focus-visible:ring-0">
           <ProductManager />
         </TabsContent>
       </Tabs>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { DollarSign, ShoppingCart, Package, TrendingUp } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { 
   startOfWeek, 
   endOfWeek, 
@@ -38,20 +38,15 @@ export function StatsOverview() {
     return products?.filter(p => p.stock !== undefined && p.stock < 5).length || 0;
   }, [products]);
 
-  // Cálculo de datos reales para el gráfico semanal
   const chartData = useMemo(() => {
     if (!orders) return [];
 
-    // Definir el inicio y fin de la semana actual (empezando el Lunes)
     const now = new Date();
     const start = startOfWeek(now, { weekStartsOn: 1 });
     const end = endOfWeek(now, { weekStartsOn: 1 });
-    
-    // Crear un intervalo de días para la semana
     const daysInWeek = eachDayOfInterval({ start, end });
 
     return daysInWeek.map((day) => {
-      // Sumar el total de ventas aprobadas para este día específico
       const dayTotal = orders
         .filter((o) => o.status === 'paid' && o.createdAt)
         .filter((o) => {
@@ -72,80 +67,65 @@ export function StatsOverview() {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4 border-l-green-500 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${totalSales}</div>
-            <p className="text-xs text-muted-foreground mt-1">Órdenes aprobadas</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-blue-500 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pedidos Pagados</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{paidOrdersCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">Listos para entrega</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <Package className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{lowStockCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">Menos de 5 unidades</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-primary shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{products?.length || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">En catálogo activo</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { title: "Ventas Totales", val: `$${totalSales}`, sub: "Órdenes aprobadas", icon: DollarSign, color: "text-green-500", bg: "bg-green-50" },
+          { title: "Pedidos Pagados", val: paidOrdersCount, sub: "Listos para entrega", icon: ShoppingCart, color: "text-blue-500", bg: "bg-blue-50" },
+          { title: "Stock Bajo", val: lowStockCount, sub: "Menos de 5 unidades", icon: Package, color: "text-amber-500", bg: "bg-amber-50" },
+          { title: "Total Productos", val: products?.length || 0, sub: "En catálogo activo", icon: TrendingUp, color: "text-primary", bg: "bg-primary/5" }
+        ].map((stat, i) => (
+          <Card key={i} className="border-none shadow-xl rounded-[2rem] overflow-hidden group">
+            <CardContent className="p-8">
+              <div className="flex justify-between items-start mb-4">
+                <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110`}>
+                  <stat.icon className="h-6 w-6" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">{stat.title}</p>
+                <div className="text-3xl font-black tracking-tighter text-foreground">{stat.val}</div>
+                <p className="text-xs font-bold text-muted-foreground/60">{stat.sub}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Ventas Semanales (Semana Actual)</CardTitle>
+      <Card className="shadow-2xl border-none rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="p-8 pb-4">
+          <CardTitle className="text-2xl font-black uppercase tracking-tight text-primary">Ventas de la Semana</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px]">
+        <CardContent className="p-4 md:p-8 h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
               <XAxis 
                 dataKey="name" 
-                fontSize={12} 
+                fontSize={10} 
+                fontWeight="900"
                 tickLine={false} 
                 axisLine={false} 
+                dy={10}
               />
               <YAxis 
-                fontSize={12} 
+                fontSize={10} 
+                fontWeight="900"
                 tickLine={false} 
                 axisLine={false} 
                 tickFormatter={(value) => `$${value}`} 
               />
               <Tooltip 
-                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-                formatter={(value: number) => [`$${value}`, 'Ventas']}
+                cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+                contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', padding: '15px' }}
+                itemStyle={{ fontWeight: '900', color: 'hsl(var(--primary))' }}
+                labelStyle={{ fontWeight: '900', marginBottom: '5px', textTransform: 'uppercase', fontSize: '10px' }}
+                formatter={(value: number) => [`$${value}`, 'VENTAS']}
               />
               <Bar 
                 dataKey="total" 
                 fill="hsl(var(--primary))" 
-                radius={[6, 6, 0, 0]} 
+                radius={[10, 10, 10, 10]} 
+                barSize={30}
               />
             </BarChart>
           </ResponsiveContainer>
