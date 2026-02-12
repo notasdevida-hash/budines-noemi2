@@ -1,9 +1,10 @@
+
 "use client";
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/components/cart-provider';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ type Product = {
   price: number;
   imageUrl: string;
   description: string;
+  category?: string;
   stock?: number;
 };
 
@@ -52,7 +54,6 @@ export function ProductCard({ product }: { product: Product }) {
         className="group relative h-full flex flex-col overflow-hidden border-none bg-card rounded-[3rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.25)] transition-all duration-500 cursor-pointer"
         onClick={() => router.push(`/products/${product.id}`)}
       >
-        {/* IMAGE WRAPPER */}
         <div className="relative aspect-[10/11] overflow-hidden">
           <Image
             src={product.imageUrl}
@@ -62,19 +63,19 @@ export function ProductCard({ product }: { product: Product }) {
             priority
           />
           
-          {/* OVERLAY ON HOVER */}
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
             <div className="w-16 h-16 rounded-full glass flex items-center justify-center text-primary transform scale-50 group-hover:scale-100 transition-transform duration-500">
               <Plus className="w-8 h-8" />
             </div>
           </div>
 
-          {/* BADGES */}
           <div className="absolute top-6 left-6 flex flex-col gap-2">
             {isOutOfStock ? (
               <Badge variant="destructive" className="text-[10px] py-1 px-4 rounded-full font-black uppercase tracking-widest shadow-lg">Agotado</Badge>
             ) : (
-              <Badge variant="secondary" className="text-[10px] py-1 px-4 rounded-full font-black bg-white/95 text-primary uppercase tracking-[0.2em] shadow-xl border-none">Artesanal</Badge>
+              <Badge variant="secondary" className="text-[10px] py-1 px-4 rounded-full font-black bg-white/95 text-primary uppercase tracking-[0.2em] shadow-xl border-none">
+                {product.category || 'Artesanal'}
+              </Badge>
             )}
           </div>
           
@@ -83,8 +84,7 @@ export function ProductCard({ product }: { product: Product }) {
           </button>
         </div>
         
-        {/* CONTENT */}
-        <CardContent className="p-8 pb-4 flex-grow flex flex-col justify-between">
+        <CardContent className="p-8 pb-8 flex-grow flex flex-col justify-between">
           <div className="space-y-3">
             <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors leading-tight">
               {product.name}

@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Loader2, Heart, Truck, Star, ChefHat, MessageCircle, ArrowRight, Sparkles, Filter } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 const HERO_IMAGES = [
   "https://res.cloudinary.com/dm2g8wqvx/image/upload/v1770704844/2_qauruh.png",
@@ -28,11 +29,12 @@ export default function Home() {
   });
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [activeCategory, setActiveCategory] = useState('Todos');
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000); // Cambia cada 5 segundos
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -45,13 +47,25 @@ export default function Home() {
 
   const { data: products, isLoading } = useCollection(productsQuery);
 
+  // Extraer categorías únicas
+  const categories = useMemo(() => {
+    if (!products) return ['Todos'];
+    const cats = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+    return ['Todos', ...cats];
+  }, [products]);
+
+  // Filtrar productos
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (activeCategory === 'Todos') return products;
+    return products.filter(p => p.category === activeCategory);
+  }, [products, activeCategory]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -62,7 +76,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      {/* HERO SECTION - REIMAGINED WITH AUTOMATIC CAROUSEL */}
+      {/* HERO SECTION */}
       <section ref={targetRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
         <motion.div style={{ opacity, scale }} className="absolute inset-0 z-0">
           <AnimatePresence mode="wait">
@@ -83,7 +97,6 @@ export default function Home() {
               />
             </motion.div>
           </AnimatePresence>
-          {/* Overlay constant to ensure text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80" />
         </motion.div>
         
@@ -122,7 +135,6 @@ export default function Home() {
           </motion.div>
         </div>
         
-        {/* Carousel Indicators */}
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-4 z-20">
           {HERO_IMAGES.map((_, i) => (
             <button
@@ -145,7 +157,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* FEATURES - ELEGANT CARDS */}
+      {/* FEATURES */}
       <section className="py-32 bg-white">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
@@ -173,10 +185,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRODUCTS SECTION - GRID REFINED */}
+      {/* PRODUCTS SECTION */}
       <section id="productos" className="py-32 bg-background relative overflow-hidden">
         <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-24 gap-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-10">
             <div className="space-y-6">
               <span className="text-primary font-black tracking-[0.5em] uppercase text-xs block">Colección de Temporada</span>
               <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-foreground leading-none">Nuestras <br />Delicias</h2>
@@ -186,33 +198,65 @@ export default function Home() {
             </p>
           </div>
 
+          {/* FILTROS DE CATEGORÍA */}
+          <div className="flex flex-wrap gap-4 mb-16 items-center">
+            <div className="bg-secondary/50 p-2 rounded-full flex flex-wrap gap-2 border border-primary/5">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={cn(
+                    "px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                    activeCategory === cat 
+                      ? "bg-primary text-white shadow-lg scale-105" 
+                      : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="flex justify-center py-40">
               <Loader2 className="h-20 w-20 animate-spin text-primary/10" />
             </div>
           ) : (
             <motion.div 
+              layout
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16"
             >
-              {products?.map((product) => (
-                <motion.div key={product.id} variants={itemVariants}>
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
+              <AnimatePresence mode="popLayout">
+                {filteredProducts.map((product) => (
+                  <motion.div 
+                    key={product.id} 
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    variants={itemVariants}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </motion.div>
           )}
+
+          {!isLoading && filteredProducts.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground font-bold italic text-xl">No hay productos en esta categoría por el momento.</p>
+            </div>
+          )}
         </div>
-        
-        {/* Subtle decorative elements */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
       </section>
 
-      {/* STORY SECTION - CINEMATIC */}
+      {/* STORY SECTION */}
       <section id="nosotros" className="py-40 bg-white overflow-hidden">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
@@ -270,7 +314,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA - IMPACTFUL */}
+      {/* CTA */}
       <section className="py-48 relative bg-primary overflow-hidden">
         <div className="absolute inset-0 opacity-30 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_white_0%,_transparent_70%)]"></div>
@@ -302,7 +346,6 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Animated background shapes */}
         <motion.div 
           animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
           transition={{ duration: 20, repeat: Infinity }}

@@ -6,16 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Loader2, Edit3, Image as ImageIcon, Upload, Package, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Loader2, Edit3, Image as ImageIcon, Upload, Package, ChevronRight, Tags } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+const CATEGORIES = ["Clásicos", "Especiales", "Sin TACC", "Veganos", "Combos"];
 
 const generateSlug = (text: string) => {
   return text
@@ -37,6 +40,7 @@ export function ProductManager() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Clásicos');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,6 +97,7 @@ export function ProductManager() {
       stock: Number(formData.get('stock')),
       imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
       description: formData.get('description') as string,
+      category: selectedCategory,
       active: true,
       createdAt: new Date().toISOString(),
     };
@@ -100,6 +105,7 @@ export function ProductManager() {
     setDocumentNonBlocking(newDocRef, newProduct, { merge: true });
     setIsAddOpen(false);
     setTempImageUrl('');
+    setSelectedCategory('Clásicos');
     toast({ title: "Creado", description: `${newProduct.name} añadido.` });
   };
 
@@ -118,6 +124,7 @@ export function ProductManager() {
       stock: Number(formData.get('stock')),
       imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
       description: formData.get('description') as string,
+      category: selectedCategory,
     };
 
     updateDocumentNonBlocking(docRef, updatedData);
@@ -146,11 +153,14 @@ export function ProductManager() {
           <h3 className="font-black text-3xl flex items-center gap-3 tracking-tighter uppercase text-primary">
             <Package className="text-primary h-8 w-8" /> Inventario
           </h3>
-          <p className="text-sm font-medium text-muted-foreground">Administrá el stock y precios de tus delicias.</p>
+          <p className="text-sm font-medium text-muted-foreground">Administrá el stock y categorías de tus delicias.</p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={(open) => {
           setIsAddOpen(open);
-          if (!open) setTempImageUrl('');
+          if (!open) {
+            setTempImageUrl('');
+            setSelectedCategory('Clásicos');
+          }
         }}>
           <DialogTrigger asChild>
             <Button size="lg" className="w-full md:w-auto py-8 px-8 rounded-2xl shadow-xl font-black text-lg transition-all hover:scale-105">
@@ -167,6 +177,21 @@ export function ProductManager() {
                   <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Nombre del Budín</Label>
                   <Input name="name" placeholder="Ej: Budín de Arándanos" required className="py-7 rounded-2xl font-bold" />
                 </div>
+                
+                <div className="space-y-2">
+                  <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Categoría</Label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="py-7 rounded-2xl font-bold">
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Precio ($)</Label>
@@ -223,10 +248,10 @@ export function ProductManager() {
                 <TableHeader>
                   <TableRow className="bg-muted/30 border-none">
                     <TableHead className="w-[100px] pl-10">PRODUCTO</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead>INFO</TableHead>
+                    <TableHead className="whitespace-nowrap">CATEGORÍA</TableHead>
                     <TableHead className="whitespace-nowrap">PRECIO</TableHead>
                     <TableHead className="whitespace-nowrap">STOCK</TableHead>
-                    <TableHead className="whitespace-nowrap">ESTADO</TableHead>
                     <TableHead className="text-right pr-10">ACCIONES</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -241,6 +266,11 @@ export function ProductManager() {
                       <TableCell>
                         <span className="font-black text-lg uppercase tracking-tight block min-w-[150px]">{prod.name}</span>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="rounded-full px-4 py-1 text-[9px] font-black uppercase tracking-widest border-primary/20 text-primary">
+                          {prod.category || 'Sin Cat.'}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-black text-2xl text-primary tracking-tighter">${prod.price}</TableCell>
                       <TableCell>
                         <Badge 
@@ -250,19 +280,11 @@ export function ProductManager() {
                           {prod.stock} UN.
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <button 
-                          onClick={() => toggleProductStatus(prod.id, prod.active)}
-                          className={`inline-flex items-center px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${prod.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'}`}
-                        >
-                          <span className={`mr-2 h-2.5 w-2.5 rounded-full ${prod.active ? 'bg-green-600 animate-pulse' : 'bg-gray-400'}`}></span>
-                          {prod.active ? 'Activo' : 'Pausado'}
-                        </button>
-                      </TableCell>
                       <TableCell className="text-right pr-10 space-x-3 whitespace-nowrap">
                         <Button variant="ghost" size="icon" onClick={() => {
                           setEditingProduct(prod);
                           setTempImageUrl(prod.imageUrl);
+                          setSelectedCategory(prod.category || 'Clásicos');
                         }} className="h-12 w-12 rounded-full hover:bg-primary/10 hover:text-primary">
                           <Edit3 className="h-5 w-5" />
                         </Button>
@@ -284,6 +306,7 @@ export function ProductManager() {
           if (!open) {
             setEditingProduct(null);
             setTempImageUrl('');
+            setSelectedCategory('Clásicos');
           }
         }}>
           <DialogContent className="max-w-md w-[95vw] rounded-[2.5rem] p-0 overflow-hidden">
@@ -296,6 +319,21 @@ export function ProductManager() {
                   <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Nombre</Label>
                   <Input name="name" defaultValue={editingProduct.name} required className="py-7 rounded-2xl font-bold" />
                 </div>
+
+                <div className="space-y-2">
+                  <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Categoría</Label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="py-7 rounded-2xl font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Precio</Label>
