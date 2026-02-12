@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Loader2, Edit3, Image as ImageIcon, Upload, Package, ChevronRight, Tags } from 'lucide-react';
+import { Plus, Trash2, Loader2, Edit3, Image as ImageIcon, Upload, Package, ChevronRight, Tags, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,8 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-const CATEGORIES = ["Clásicos", "Especiales", "Sin TACC", "Veganos", "Combos"];
 
 const generateSlug = (text: string) => {
   return text
@@ -40,8 +38,19 @@ export function ProductManager() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Clásicos');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Obtener categorías únicas dinámicamente de los productos existentes
+  const availableCategories = useMemo(() => {
+    if (!products) return ["Clásicos", "Especiales"];
+    const cats = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+    // Asegurar que siempre haya algunas básicas si no hay productos
+    if (cats.length === 0) return ["Clásicos", "Especiales"];
+    return cats.sort();
+  }, [products]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -88,6 +97,13 @@ export function ProductManager() {
     const colRef = collection(db, 'products');
     const newDocRef = doc(colRef);
     const name = formData.get('name') as string;
+    
+    const finalCategory = isAddingNewCategory ? newCategoryName : selectedCategory;
+
+    if (!finalCategory) {
+      toast({ title: "Error", description: "Debes seleccionar o crear una categoría.", variant: "destructive" });
+      return;
+    }
 
     const newProduct = {
       id: newDocRef.id,
@@ -97,16 +113,15 @@ export function ProductManager() {
       stock: Number(formData.get('stock')),
       imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
       description: formData.get('description') as string,
-      category: selectedCategory,
+      category: finalCategory,
       active: true,
       createdAt: new Date().toISOString(),
     };
 
     setDocumentNonBlocking(newDocRef, newProduct, { merge: true });
     setIsAddOpen(false);
-    setTempImageUrl('');
-    setSelectedCategory('Clásicos');
-    toast({ title: "Creado", description: `${newProduct.name} añadido.` });
+    resetForm();
+    toast({ title: "Creado", description: `${newProduct.name} añadido a ${finalCategory}.` });
   };
 
   const handleEditProduct = (e: React.FormEvent<HTMLFormElement>) => {
@@ -116,6 +131,7 @@ export function ProductManager() {
     const formData = new FormData(e.currentTarget);
     const docRef = doc(db, 'products', editingProduct.id);
     const name = formData.get('name') as string;
+    const finalCategory = isAddingNewCategory ? newCategoryName : selectedCategory;
 
     const updatedData = {
       name: name,
@@ -124,18 +140,20 @@ export function ProductManager() {
       stock: Number(formData.get('stock')),
       imageUrl: tempImageUrl || (formData.get('imageUrl') as string),
       description: formData.get('description') as string,
-      category: selectedCategory,
+      category: finalCategory,
     };
 
     updateDocumentNonBlocking(docRef, updatedData);
     setEditingProduct(null);
-    setTempImageUrl('');
-    toast({ title: "Actualizado", description: "Cambios guardados." });
+    resetForm();
+    toast({ title: "Actualizado", description: "Cambios guardados con éxito." });
   };
 
-  const toggleProductStatus = (productId: string, currentStatus: boolean) => {
-    const docRef = doc(db, 'products', productId);
-    updateDocumentNonBlocking(docRef, { active: !currentStatus });
+  const resetForm = () => {
+    setTempImageUrl('');
+    setSelectedCategory('');
+    setNewCategoryName('');
+    setIsAddingNewCategory(false);
   };
 
   const handleDeleteProduct = (productId: string) => {
@@ -153,14 +171,11 @@ export function ProductManager() {
           <h3 className="font-black text-3xl flex items-center gap-3 tracking-tighter uppercase text-primary">
             <Package className="text-primary h-8 w-8" /> Inventario
           </h3>
-          <p className="text-sm font-medium text-muted-foreground">Administrá el stock y categorías de tus delicias.</p>
+          <p className="text-sm font-medium text-muted-foreground">Administrá el stock y creá tus propias categorías.</p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={(open) => {
           setIsAddOpen(open);
-          if (!open) {
-            setTempImageUrl('');
-            setSelectedCategory('Clásicos');
-          }
+          if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
             <Button size="lg" className="w-full md:w-auto py-8 px-8 rounded-2xl shadow-xl font-black text-lg transition-all hover:scale-105">
@@ -178,18 +193,52 @@ export function ProductManager() {
                   <Input name="name" placeholder="Ej: Budín de Arándanos" required className="py-7 rounded-2xl font-bold" />
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Categoría</Label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="py-7 rounded-2xl font-bold">
-                      <SelectValue placeholder="Selecciona una categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {!isAddingNewCategory ? (
+                    <div className="space-y-3">
+                      <Select value={selectedCategory} onValueChange={(val) => {
+                        if (val === "ADD_NEW") {
+                          setIsAddingNewCategory(true);
+                        } else {
+                          setSelectedCategory(val);
+                        }
+                      }}>
+                        <SelectTrigger className="py-7 rounded-2xl font-bold">
+                          <SelectValue placeholder="Seleccioná o creá una..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableCategories.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                          <SelectItem value="ADD_NEW" className="font-black text-primary italic">
+                            + Inventar nueva categoría...
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Nombre de la nueva categoría" 
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          className="py-7 rounded-2xl font-bold border-primary/40"
+                          autoFocus
+                        />
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => setIsAddingNewCategory(false)}
+                          className="h-14 rounded-2xl font-bold text-xs"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic pl-2">Se agregará a la lista automáticamente al guardar.</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -284,7 +333,7 @@ export function ProductManager() {
                         <Button variant="ghost" size="icon" onClick={() => {
                           setEditingProduct(prod);
                           setTempImageUrl(prod.imageUrl);
-                          setSelectedCategory(prod.category || 'Clásicos');
+                          setSelectedCategory(prod.category || '');
                         }} className="h-12 w-12 rounded-full hover:bg-primary/10 hover:text-primary">
                           <Edit3 className="h-5 w-5" />
                         </Button>
@@ -305,8 +354,7 @@ export function ProductManager() {
         <Dialog open={!!editingProduct} onOpenChange={(open) => {
           if (!open) {
             setEditingProduct(null);
-            setTempImageUrl('');
-            setSelectedCategory('Clásicos');
+            resetForm();
           }
         }}>
           <DialogContent className="max-w-md w-[95vw] rounded-[2.5rem] p-0 overflow-hidden">
@@ -320,18 +368,47 @@ export function ProductManager() {
                   <Input name="name" defaultValue={editingProduct.name} required className="py-7 rounded-2xl font-bold" />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="font-bold uppercase text-[10px] tracking-widest text-primary">Categoría</Label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="py-7 rounded-2xl font-bold">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {!isAddingNewCategory ? (
+                    <Select value={selectedCategory} onValueChange={(val) => {
+                      if (val === "ADD_NEW") {
+                        setIsAddingNewCategory(true);
+                      } else {
+                        setSelectedCategory(val);
+                      }
+                    }}>
+                      <SelectTrigger className="py-7 rounded-2xl font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCategories.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                        <SelectItem value="ADD_NEW" className="font-black text-primary italic">
+                          + Inventar nueva categoría...
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Nueva categoría..." 
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        className="py-7 rounded-2xl font-bold border-primary/40"
+                        autoFocus
+                      />
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        onClick={() => setIsAddingNewCategory(false)}
+                        className="h-14 rounded-2xl font-bold text-xs"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
